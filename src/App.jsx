@@ -132,6 +132,7 @@ function App() {
         {activePage === "Students" && (
           <div>
             <h2>Students</h2>
+            <AddStudent setStudents={setStudents} students={students}/>
             <StudentList students={students} />
           </div>
         )}
