@@ -133,7 +133,7 @@ function App() {
           <div>
             <h2>Students</h2>
             <AddStudent setStudents={setStudents} students={students}/>
-            <StudentList students={students} />
+            <StudentList students={students} setStudents={setStudents} />
           </div>
         )}
 

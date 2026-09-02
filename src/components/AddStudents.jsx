@@ -1,24 +1,34 @@
-import { useState } from "react"
+import { useState, useEffect } from "react";
 
 function AddStudent({ students, setStudents }) {
     const [studentName, setStudentName] = useState("")
     const [studentClass, setStudentClass] = useState("")
-    // const [error, setError] = useState("")
+    const [error, setError] = useState("")
+
+    useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => {
+                setError("")
+            }, 2000)
+
+            return () => clearTimeout(timer)
+        }
+    }, [error])
 
     function handleSubmit(event) {
         event.preventDefault()
 
         if (studentName === "") {
-            alert("Please enter the student name")
+            setError("Please enter the student name")
             return
         }
 
         if (studentClass === "") {
-            alert("Please select a class")
+            setError("Please select a class")
             return
         }
 
-        // setError("")
+        setError("")
 
         const newStudent = {
             id: students.length + 1,
@@ -29,10 +39,21 @@ function AddStudent({ students, setStudents }) {
             ...previousStudents,
             newStudent
         ])
+        setStudentName("")
+        setStudentClass("")
     }
     return (
         <div className="add-student">
             <h2>Add Student</h2>
+            {error && (
+                <div className="error-message">
+                    {error}
+                    {/* <span>{error}</span>
+                    <button onClick={() => setError("")}>
+                        x
+                    </button> */}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit}>
 
@@ -67,8 +88,6 @@ function AddStudent({ students, setStudents }) {
                         <option>SS3</option>
                     </select>
                 </label>
-
-                {/* {error && <p>{error}</p>} */}
 
                 <button type="submit">Add Student</button>
 
