@@ -14,6 +14,11 @@ function Sidebar(props) {
                 </li>
 
                 <li
+                    className={props.activePage === "Add Student" ? "active" : ""}
+                    onClick={() => props.setActivePage("Add Student")}>Add Student
+                </li>
+
+                <li
                     className={props.activePage === "Teachers" ? "active" : ""}
                     onClick={() => props.setActivePage("Teachers")}>Teachers
                 </li>

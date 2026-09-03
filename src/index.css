@@ -163,3 +163,111 @@ body {
   border-radius: 10px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
 }
+
+.search-input {
+  margin: 20px 0 10px 0;
+  width: 300px;
+  padding: 10px;
+  border: 1px solid #166534;
+  border-radius: 6px;
+  background-color: white;
+}
+
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  background-color: #166534;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  /* margin-left: 10px; */
+}
+
+.btn:hover {
+  background-color: #facc15;
+  color: #166534;
+}
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+.add-student-page {
+  margin-top: 25px;
+  max-width: 990px;
+}
+
+.add-student-page h2 {
+  color: #166534;
+  margin-bottom: 5px;
+}
+
+.add-student-page > p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.add-student-page form {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.add-student-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  color: #166534;
+  font-weight: bold;
+}
+
+.add-student-page input,
+.add-student-page select,
+.add-student-page textarea {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.add-student-page input:focus,
+.add-student-page select:focus,
+.add-student-page textarea:focus {
+  outline: none;
+  border-color: #166534;
+}
+
+.add-student-page form label:last-of-type {
+  grid-column: 1 / -1;
+}
+
+.add-student-page textarea {
+  min-height: 100px;
+  resize: horizontal;
+}
+
+.add-student-page button {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+
+.success-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #166534;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  font-weight: bold;
+  z-index: 1000;
+}

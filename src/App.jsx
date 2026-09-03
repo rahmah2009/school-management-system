@@ -1,6 +1,6 @@
 import Sidebar from "./components/Sidebar"
 import StudentList from "./components/StudentList"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Dashboard from "./components/Dashboard"
 import TeacherList from "./components/TeacherList"
 import ClassesList from "./components/ClassesList"
@@ -58,63 +58,34 @@ const classes = [
 
 function App() {
   const [activePage, setActivePage] = useState("Dashboard")
-  const [students, setStudents] = useState([
-    {
-      id: 1,
-      name: "Muhammad Garba",
-      class: "SS1"
-    },
-    {
-      id: 2,
-      name: "Aishah Ibrahim",
-      class: "SS1",
-    },
-    {
-      id: 3,
-      name: "Abdullah Musa",
-      class: "SS3"
-    },
-    {
-      id: 4,
-      name: "Fatimah Yusuf",
-      class: "JSS3"
-    },
-    {
-      id: 5,
-      name: "Fatimah Bello",
-      class: "JSS3"
-    },
-    {
-      id: 6,
-      name: "Fatimah Bello",
-      class: "JSS3"
-    },
-    {
-      id: 7,
-      name: "Fatimah Bello",
-      class: "JSS3"
-    },
-    {
-      id: 8,
-      name: "Fatimah Bello",
-      class: "JSS3"
-    },
-    {
-      id: 9,
-      name: "Fatimah Bello",
-      class: "JSS3"
-    },
-    {
-      id: 10,
-      name: "Fatimah Bello",
-      class: "JSS3"
-    },
-    {
-      id: 11,
-      name: "Fatimah Bello",
-      class: "JSS3"
+  const [students, setStudents] = useState(() => {
+    const savedStudents = localStorage.getItem("students")
+
+    if (savedStudents) {
+      return JSON.parse(savedStudents)
     }
-  ])
+    return []
+
+    //   return [
+    //     { id: 1, name: "Muhammad Garba", class: "SS1" },
+    //     { id: 2, name: "Aishah Ibrahim", class: "SS1" },
+    //     { id: 3, name: "Abdullah Musa", class: "SS3" },
+    //     { id: 4, name: "Fatimah Yusuf", class: "JSS3" },
+    //     { id: 5, name: "Fatimah Bello", class: "JSS3" },
+    //     { id: 6, name: "Fatimah Bello", class: "JSS3" },
+    //     { id: 7, name: "Fatimah Bello", class: "JSS3" },
+    //     { id: 8, name: "Fatimah Bello", class: "JSS3" },
+    //     { id: 9, name: "Fatimah Bello", class: "JSS3" },
+    //     { id: 10, name: "Fatimah Bello", class: "JSS3" },
+    //     { id: 11, name: "Fatimah Bello", class: "JSS3" }
+    //   ]
+  })
+
+  useEffect(() => {
+    localStorage.setItem("students", JSON.stringify(students))
+  }, [students])
+
+
   return (
     <div className="app">
       <Sidebar
@@ -123,17 +94,32 @@ function App() {
         setActivePage={setActivePage}
       />
       <main className="content">
-        <h1>School Management System</h1>
-        <h2>Welcome back, Admin 👋</h2>
-        <p>Current Page: {activePage}</p>
+
         {activePage === "Dashboard" && (
-          <Dashboard students={students} teachers={teachers} classes={classes} />
+          <Dashboard
+            students={students}
+            teachers={teachers}
+            classes={classes}
+          />
         )}
+
         {activePage === "Students" && (
           <div>
             <h2>Students</h2>
-            <AddStudent setStudents={setStudents} students={students}/>
-            <StudentList students={students} setStudents={setStudents} />
+
+            <StudentList
+              students={students}
+              setStudents={setStudents}
+            />
+          </div>
+        )}
+
+        {activePage === "Add Student" && (
+          <div>
+            <AddStudent
+              setStudents={setStudents}
+              students={students}
+            />
           </div>
         )}
 
@@ -143,12 +129,14 @@ function App() {
             <TeacherList teachers={teachers} />
           </div>
         )}
+
         {activePage === "Classes" && (
           <div>
             <h2>Classes</h2>
             <ClassesList classes={classes} />
           </div>
         )}
+
       </main>
     </div>
   )

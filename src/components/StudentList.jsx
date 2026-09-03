@@ -1,10 +1,22 @@
-import { useState } from "react"
-import Modal from "./modal"
+import { useState, useEffect } from "react"
+import Modal from "./Modal"
+import Button from "./Button"
 
 function StudentList({ students, setStudents }) {
     const [studentToDelete, setStudentToDelete] = useState(null)
     const [studentToEdit, setStudentToEdit] = useState(null)
     const [searchTerm, setSearchTerm] = useState("")
+    const [editError, setEditError] = useState("")
+
+    useEffect(() => {
+        if (editError) {
+            const timer = setTimeout(() => {
+                setEditError("")
+            }, 2000)
+
+            return () => clearTimeout(timer)
+        }
+    }, [editError])
 
     function handleDelete(studentId) {
         setStudents((previousStudents) =>
@@ -13,31 +25,88 @@ function StudentList({ students, setStudents }) {
     }
 
     function handleEdit() {
+        if (studentToEdit.name === "") {
+            setEditError("Please enter the student name")
+            return
+        }
+
+        if (studentToEdit.class === "") {
+            setEditError("Please select a class")
+            return
+        }
+
         setStudents((previousStudents) =>
-        previousStudents.map((student) =>
-            student.id === studentToEdit.id ? studentToEdit : student
-        ))
+            previousStudents.map((student) =>
+                student.id === studentToEdit.id ? studentToEdit : student
+            )
+        )
+
         setStudentToEdit(null)
     }
+
+    const filteredStudents = students.filter((student) =>
+        student.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     return (
         <div className="student-list">
 
-            {students.map((student) => (
+            <input
+                type="text"
+                className="search-input"
+                value={searchTerm}
+                onChange={(event) =>
+                    setSearchTerm(event.target.value)
+                }
+                placeholder="Search Student..."
+            />
+
+            {filteredStudents.map((student) => (
                 <div key={student.id} className="card">
+
                     <p>ID: {student.id}</p>
+
                     <h3>{student.name}</h3>
+
+                    <p>Gender: {student.gender}</p>
+
+                    <p>Date of Birth: {student.dateOfBirth}</p>
+
                     <p>Class: {student.class}</p>
 
-                    <button onClick={() => setStudentToEdit(student)}>
-                        Save Changes
-                    </button>
+                    <p>Admission Date: {student.admissionDate}</p>
 
-                    <button onClick={() => setStudentToDelete(student)}>
-                        Delete
-                    </button>
+                    <p>Session: {student.session}</p>
+
+                    <p>Parent/Guardian: {student.parentName}</p>
+
+                    <p>Parent Phone: {student.parentPhone}</p>
+
+                    <p>Address: {student.address}</p>
+
+                    <div className="btn-group">
+                        <Button
+                            onClick={() => {
+                                setStudentToEdit(student)
+                                setEditError("")
+                            }}
+                        >
+                            Edit
+                        </Button>
+
+                        <Button onClick={() => setStudentToDelete(student)}>
+                            Delete
+                        </Button>
+                    </div>
+
                 </div>
             ))}
+
+            {students.length === 0 ? (
+                <p>No students added yet.</p>
+            ) : filteredStudents.length === 0 ? (
+                <p>No student with this name found.</p>
+            ) : null}
 
             {studentToDelete && (
                 <Modal>
@@ -47,24 +116,32 @@ function StudentList({ students, setStudents }) {
                         Are you sure you want to delete {studentToDelete.name}?
                     </p>
 
-                    <button
-                        onClick={() => {
-                            handleDelete(studentToDelete.id)
-                            setStudentToDelete(null)
-                        }}
-                    >
-                        Delete
-                    </button>
+                    <div className="btn-group">
+                        <Button
+                            onClick={() => {
+                                handleDelete(studentToDelete.id)
+                                setStudentToDelete(null)
+                            }}
+                        >
+                            Delete
+                        </Button>
 
-                    <button onClick={() => setStudentToDelete(null)}>
-                        Cancel
-                    </button>
+                        <Button onClick={() => setStudentToDelete(null)}>
+                            Cancel
+                        </Button>
+                    </div>
+
                 </Modal>
             )}
 
             {studentToEdit && (
                 <Modal>
                     <h3>Edit Student?</h3>
+                    {editError && (
+                        <div className="error-message">
+                            {editError}
+                        </div>
+                    )}
                     <label>
                         Student Name:
 
@@ -100,13 +177,16 @@ function StudentList({ students, setStudents }) {
                             <option value="SS3">SS3</option>
                         </select>
                     </label>
-                    <button onClick={handleEdit}>
-                        Save Changes
-                    </button>
+                    <div className="btn-group">
+                        <Button onClick={handleEdit}>
+                            Save Changes
+                        </Button>
 
-                    <button onClick={() => setStudentToEdit(null)}>
-                        Cancel
-                    </button>
+                        <Button onClick={() => setStudentToEdit(null)}>
+                            Cancel
+                        </Button>
+                    </div>
+
                 </Modal>
             )}
         </div>
