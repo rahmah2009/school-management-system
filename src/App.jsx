@@ -1,145 +1,51 @@
-import Sidebar from "./components/Sidebar"
-import StudentList from "./components/StudentList"
-import { useState, useEffect } from "react"
-import Dashboard from "./components/Dashboard"
-import TeacherList from "./components/TeacherList"
-import ClassesList from "./components/ClassesList"
-import AddStudent from "./components/AddStudents"
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-const teachers = [
-  {
-    id: 1,
-    name: "Mr. Bidemi"
-  },
-  {
-    id: 2,
-    name: "Mrs. Ahmad"
-  },
-  {
-    id: 3,
-    name: "Mr.AbulRahman"
-  },
-  {
-    id: 4,
-    name: "Mr. Kamaldeen"
-  },
-  {
-    id: 5,
-    name: "Mrs Adeleke"
-  }
-]
+// Layouts
+import PublicLayout from "./components/layout/PublicLayout";
+import AdminLayout from "./components/layout/AdminLayout";
 
-const classes = [
-  {
-    id: 1,
-    name: "JSS1"
-  },
-  {
-    id: 2,
-    name: "JSS2"
-  },
-  {
-    id: 3,
-    name: "JSS3"
-  },
-  {
-    id: 4,
-    name: "SS1"
-  },
-  {
-    id: 5,
-    name: "SS2"
-  },
-  {
-    id: 6,
-    name: "SS3"
-  }
-]
+// Public pages
+import Home from "./pages/public/Home";
+import About from "./pages/public/About";
+import Academics from "./pages/public/Academics";
+import PublicTeachers from "./pages/public/Teachers";
+import Contact from "./pages/public/Contact";
 
-function App() {
-  const [activePage, setActivePage] = useState("Dashboard")
-  const [students, setStudents] = useState(() => {
-    const savedStudents = localStorage.getItem("students")
+// Admin pages
+import Dashboard from "./pages/admin/Dashboard";
+import Students from "./pages/admin/Students";
+import Teachers from "./pages/admin/Teachers";
+import Classes from "./pages/admin/Classes";
+import Results from "./pages/admin/Results";
+import Sessions from "./pages/admin/Sessions";
+import Settings from "./pages/admin/Settings";
 
-    if (savedStudents) {
-      return JSON.parse(savedStudents)
-    }
-    return []
-
-    //   return [
-    //     { id: 1, name: "Muhammad Garba", class: "SS1" },
-    //     { id: 2, name: "Aishah Ibrahim", class: "SS1" },
-    //     { id: 3, name: "Abdullah Musa", class: "SS3" },
-    //     { id: 4, name: "Fatimah Yusuf", class: "JSS3" },
-    //     { id: 5, name: "Fatimah Bello", class: "JSS3" },
-    //     { id: 6, name: "Fatimah Bello", class: "JSS3" },
-    //     { id: 7, name: "Fatimah Bello", class: "JSS3" },
-    //     { id: 8, name: "Fatimah Bello", class: "JSS3" },
-    //     { id: 9, name: "Fatimah Bello", class: "JSS3" },
-    //     { id: 10, name: "Fatimah Bello", class: "JSS3" },
-    //     { id: 11, name: "Fatimah Bello", class: "JSS3" }
-    //   ]
-  })
-
-  useEffect(() => {
-    localStorage.setItem("students", JSON.stringify(students))
-  }, [students])
-
-
+export default function App() {
   return (
-    <div className="app">
-      <Sidebar
-        schoolName="Greenfield School"
-        activePage={activePage}
-        setActivePage={setActivePage}
-      />
-      <main className="content">
+    <BrowserRouter>
+      <Routes>
 
-        {activePage === "Dashboard" && (
-          <Dashboard
-            students={students}
-            teachers={teachers}
-            classes={classes}
-          />
-        )}
+        {/* Public website */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/academics" element={<Academics />} />
+          <Route path="/teachers" element={<PublicTeachers />} />
+          <Route path="/contact" element={<Contact />} />
+        </Route>
 
-        {activePage === "Students" && (
-          <div>
-            <h2>Students</h2>
+        {/* Admin website */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="students" element={<Students />} />
+          <Route path="teachers" element={<Teachers />} />
+          <Route path="classes" element={<Classes />} />
+          <Route path="results" element={<Results />} />
+          <Route path="sessions" element={<Sessions />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
 
-            <StudentList
-              students={students}
-              setStudents={setStudents}
-            />
-          </div>
-        )}
-
-        {activePage === "Add Student" && (
-          <div>
-            <AddStudent
-              setStudents={setStudents}
-              students={students}
-            />
-          </div>
-        )}
-
-        {activePage === "Teachers" && (
-          <div>
-            <h2>Teachers</h2>
-            <TeacherList teachers={teachers} />
-          </div>
-        )}
-
-        {activePage === "Classes" && (
-          <div>
-            <h2>Classes</h2>
-            <ClassesList classes={classes} />
-          </div>
-        )}
-
-      </main>
-    </div>
-  )
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App
