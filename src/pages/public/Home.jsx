@@ -1,38 +1,69 @@
+import { Link } from "react-router-dom";
+import SectionHeading from "../../components/common/SectionHeading";
+import Card from "../../components/common/Card";
+
 function Home() {
     return (
         <div className="home-page">
-            <section className="hero-section">
-                <div className="hero-content">
-                    <h1>Welcome to Greenfiels School</h1>
+            {/* HERO SECTION */}
+            <section className="relative min-h-[90vh] flex items-center justify-center bg-green-900 px-6 py-20">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-950 via-green-900 to-green-800"></div>
 
-                    <p>
-                        Welcome to Greenfield School, where we nurture young minds and
-                        foster a love for learning. Our dedicated faculty and staff are
-                        committed to providing a supportive and engaging educational
-                        environment for all students. Explore our website to learn more
-                        about our academic programs, extracurricular activities, and the
-                        vibrant community that makes Greenfield School a place where
-                        students thrive.
+                <div className="relative z-10 max-w-4xl rounded-3xl border border-white/20 bg-white/10 p-8 text-center shadow-2xl backdrop-blur-md md:p-12">
+
+                    <p className="mb-4 text-sm font-bold tracking-[0.3em] text-yellow-400">
+                        WELCOME TO GREENFIELD SCHOOL
                     </p>
 
-                    <div>
-                        <button>Explore Our School</button>
-                        <button>Contact Us</button>
-                        <button>Apply Now</button>
+                    <h1 className="mb-6 text-4xl font-bold leading-tight text-white md:text-6xl">
+                        Building Bright Minds,
+                        <br />
+                        <span className="text-yellow-400">
+                            Shaping Great Futures
+                        </span>
+                    </h1>
+
+                    <p className="mx-auto mb-8 max-w-2xl text-base leading-7 text-green-50 md:text-lg">
+                        Welcome to Greenfield School, where we nurture young minds
+                        and foster a love for learning. We provide a supportive
+                        environment where students develop knowledge, character,
+                        skills, and confidence for a brighter future.
+                    </p>
+
+                    <div className="flex flex-col justify-center gap-4 sm:flex-row">
+
+                        <Link to="/about" className="rounded-full bg-yellow-400 px-7 py-3 font-semibold text-green-950 transition duration-300 hover:-translate-y-1 hover:bg-yellow-300 hover:shadow-lg">
+                            Explore Our School
+                        </Link>
+
+                        <Link to="/contact" className="rounded-full border border-white/40 bg-white/10 px-7 py-3 font-semibold text-white backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:bg-white/20">
+                            Contact Us
+                        </Link>
+
+                        <Link to="/contact" className="rounded-full border border-yellow-400 px-7 py-3 font-semibold text-yellow-400 transition duration-300 hover:-translate-y-1 hover:bg-yellow-400 hover:text-green-950">
+                            Apply Now
+                        </Link>
+
                     </div>
+
                 </div>
             </section>
+            {/* HERO SECTION ENDS HERE */}
 
-            <section className="welcome-section">
-                <div className="image">
-                    <div>School Image</div>
+            {/* WELCOME SECTION */}
+
+            <section className="grid items-center gap-12 px-6 py-20 md:grid-cols-2 md:px-12 lg:px-20">
+                <div className="items-center flex min-h-[350px] justify-center bg-green-100 rounded-3xl shadow-lg">
+                    <span className="text-lg font-semibold text-green-800">
+                        School Image
+                    </span>
                 </div>
 
-                <div className="welcome-content">
-                    <p>ABOUT GREENFIELD SCHOOL</p>
-                    <h2>Welcome to Greenfield School</h2>
+                <div className="max-w-xl">
+                    <p className="text-green-700 mb-3 text-sm font-bold tracking-[0.2em]">ABOUT GREENFIELD SCHOOL</p>
+                    <h2 className="md:text-4xl font-bold text-green-950 text-3xl mb-6">Welcome to Greenfield School</h2>
 
-                    <p>
+                    <p className="leading-7 text-gray-600 mb-6">
                         At Greenfield School, we are dedicated to providing a nurturing and
                         stimulating environment for our students. Our experienced faculty and
                         staff are committed to fostering a love for learning, encouraging
@@ -43,7 +74,7 @@ function Home() {
                         future.
                     </p>
 
-                    <p>
+                    <p className="leading-7 text-gray-600 mb-6">
                         Our school offers a wide range of academic programs, extracurricular
                         activities, and community engagement opportunities. We strive to
                         create a supportive and inclusive environment where every student
@@ -52,304 +83,260 @@ function Home() {
                         makes Greenfield School a place of excellence in education.
                     </p>
 
-                    <button>Learn More</button>
+                    <Link to="/about" className="rounded-full px-6 py-3 bg-green-800 text-white transition duration-300 hover:-translate-y-1 hover:bg-green-700 hover:shadow-lg font-semibold">
+                        Learn More
+                    </Link>
                 </div>
             </section>
 
             <section className="why-choose-section">
-                <div className="section-heading">
-                    <p>WHY CHOOSE US</p>
+                <SectionHeading
+                    eyebrow="WHY CHOOSE US"
+                    title="Why Choose Greenfield School?"
+                    description="We are committed to creating an environment where students can learn, grow, and achieve their full potential."
+                />
 
-                    <h2>Why Choose Greenfield School?</h2>
+                <div className="grid gap-6 px-6 md:grid-cols-2 lg:grid-cols-4">
 
-                    <p>
-                        We are committed to creating an environment where students
-                        can learn, grow, and achieve their full potential.
-                    </p>
-                </div>
+                    <Card
+                        title="Quality Education"
+                        description="We provide students with a strong academic foundation and meaningful learning experiences."
+                    />
 
-                <div className="features">
+                    <Card
+                        title="Experienced Teachers"
+                        description="Our teachers guide and support students throughout their educational journey."
+                    />
 
-                    <div className="feature-card">
-                        <h3>Quality Education</h3>
-                        <p>
-                            We provide students with a strong academic foundation
-                            and meaningful learning experiences.
-                        </p>
-                    </div>
+                    <Card
+                        title="Character Development"
+                        description="We help students develop discipline, responsibility, confidence, and good character."
+                    />
 
-                    <div className="feature-card">
-                        <h3>Experienced Teachers</h3>
-                        <p>
-                            Our teachers guide and support students throughout
-                            their educational journey.
-                        </p>
-                    </div>
-
-                    <div className="feature-card">
-                        <h3>Character Development</h3>
-                        <p>
-                            We help students develop discipline, responsibility,
-                            confidence, and good character.
-                        </p>
-                    </div>
-
-                    <div className="feature-card">
-                        <h3>Safe Learning Environment</h3>
-                        <p>
-                            We provide a supportive environment where students
-                            can learn and express themselves confidently.
-                        </p>
-                    </div>
+                    <Card
+                        title="Safe Learning Environment"
+                        description="We provide a supportive environment where students can learn and express themselves confidently."
+                    />
 
                 </div>
             </section>
 
             <section className="academics-section">
-                <div className="section-heading">
-                    <p>OUR ACADEMICS</p>
 
-                    <h2>Explore Our Academic Programs</h2>
+                <SectionHeading
+                    eyebrow="OUR ACADEMICS"
+                    title="Explore Our Academic Programs"
+                    description=" Our academic programs are designed to help students build strong foundations and prepare for their future."
+                />
 
-                    <p>
-                        Our academic programs are designed to help students build
-                        strong foundations and prepare for their future.
-                    </p>
-                </div>
+                <div className="grid gap-6 px-6 md:grid-cols-2">
 
-                <div className="academic-cards">
+                    <Card
+                        title="Junior Secondary School"
+                        description="A strong foundation that develops students' knowledge, confidence, critical thinking, and essential skills."
+                    >
+                        <Link to="/academics" className="mb-4 rounded-full bg-green-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
+                            Learn More
+                        </Link>
+                    </Card>
 
-                    <div className="academic-card">
-                        <h3>Junior Secondary School</h3>
-
-                        <p>
-                            A strong foundation that develops students' knowledge,
-                            confidence, critical thinking, and essential skills.
-                        </p>
-
-                        <button>Learn More</button>
-                    </div>
-
-                    <div className="academic-card">
-                        <h3>Senior Secondary School</h3>
-
-                        <p>
-                            A focused learning environment that prepares students
-                            for higher education, careers, and responsible adulthood.
-                        </p>
-
-                        <button>Learn More</button>
-                    </div>
+                    <Card
+                        title="Senior Secondary School"
+                        description="A focused learning environment that prepares students for higher education, careers, and responsible adulthood."
+                    >
+                        <Link to="/academics" className="mb-4 rounded-full bg-green-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
+                            Learn More
+                        </Link>
+                    </Card>
 
                 </div>
             </section>
 
-            <section className="stats-section">
-                <div className="stat">
-                    <h2>500+</h2>
-                    <p>Students</p>
+            <section className="grid grid-cols-2 gap-6 bg-green-900 px-6 py-16 text-center md:grid-cols-4">
+                <div className="rounded-2xl bg-white/10 p-6">
+                    <h2 className="text-4xl font-bold text-yellow-400">500+</h2>
+                    <p className="mt-2 text-green-50">Students</p>
                 </div>
 
-                <div className="stat">
-                    <h2>30+</h2>
-                    <p>Teachers</p>
+                <div className="rounded-2xl bg-white/10 p-6">
+                    <h2 className="text-4xl font-bold text-yellow-400">30+</h2>
+                    <p className="mt-2 text-green-50">Teachers</p>
                 </div>
 
-                <div className="stat">
-                    <h2>15+</h2>
-                    <p>Classes</p>
+                <div className="rounded-2xl bg-white/10 p-6">
+                    <h2 className="text-4xl font-bold text-yellow-400">15+</h2>
+                    <p className="mt-2 text-green-50">Classes</p>
                 </div>
 
-                <div className="stat">
-                    <h2>10+</h2>
-                    <p>Years of Excellence</p>
+                <div className="rounded-2xl bg-white/10 p-6">
+                    <h2 className="text-4xl font-bold text-yellow-400">10+</h2>
+                    <p className="mt-2 text-green-50">Years of Excellence</p>
                 </div>
             </section>
 
             <section className="principal-section">
 
-                <div className="principal-content">
-                    <p>MESSAGE FROM THE PRINCIPAL</p>
-
-                    <h2>Welcome to Greenfield School</h2>
-
-                    <p>
-                        At Greenfield School, we believe that every student has
+                <SectionHeading
+                    eyebrow="MESSAGE FROM THE PRINCIPAL"
+                    title="Welcome to Greenfield School"
+                    description="At Greenfield School, we believe that every student has
                         unique potential. Our responsibility is to provide the
                         guidance, knowledge, and opportunities they need to grow
-                        into confident and responsible individuals.
-                    </p>
+                        into confident and responsible individuals."
+                />
+                <div className="mx-auto grid max-w-5xl items-center gap-8 px-6 md:grid-cols-2">
 
-                    <p>
-                        We are committed to maintaining high academic standards
-                        while helping our students develop strong character,
-                        creativity, discipline, and a love for learning.
-                    </p>
+                    <div className="flex min-h-[300px] items-center justify-center rounded-3xl bg-green-100">
+                        <span className="font-semibold text-green-800">
+                            Principal Image
+                        </span>
+                    </div>
 
-                    <h3>Dr. Suleiman Ibroheem</h3>
-                    <p>Principal, Greenfield School</p>
+                    <div>
+                        <h3 className="mb-2 text-2xl font-bold text-green-950">
+                            Dr. Suleiman Ibroheem
+                        </h3>
+
+                        <p className="mb-4 font-medium text-green-700">
+                            Principal, Greenfield School
+                        </p>
+
+                        <p className="leading-7 text-gray-600">
+                            Our school is committed to helping every student discover their
+                            potential, develop strong character, and prepare for a successful
+                            future.
+                        </p>
+                    </div>
+
                 </div>
             </section>
 
             <section className="facilities-section">
-                <div className="section-heading">
-                    <p>OUR FACILITIES</p>
-
-                    <h2>Learning Beyond the Classroom</h2>
-
-                    <p>
-                        Our facilities provide students with the resources and
+                <SectionHeading
+                    eyebrow="OUR FACILITIES"
+                    title="Learning Beyond the Classroom"
+                    description="Our facilities provide students with the resources and
                         environment they need to learn, explore, and develop
-                        practical skills.
-                    </p>
-                </div>
+                        practical skills."
+                />
 
-                <div className="facility-cards">
+                <div className="grid gap-6 px-6 md:grid-cols-2 lg:grid-cols-4">
 
-                    <div className="facility-card">
-                        <h3>Science Laboratory</h3>
+                    <Card
+                        title="Science Laboratory"
+                        description="A practical environment where students can explore science through experiments and hands-on learning."
+                    />
 
-                        <p>
-                            A practical environment where students can explore
-                            science through experiments and hands-on learning.
-                        </p>
-                    </div>
+                    <Card
+                        title="School Library"
+                        description="A quiet learning space with books and resources that encourage reading, research, and independent learning."
+                    />
 
-                    <div className="facility-card">
-                        <h3>School Library</h3>
+                    <Card
+                        title="Computer Laboratory"
+                        description="Students develop digital skills and explore technology in a practical and engaging environment."
+                    />
 
-                        <p>
-                            A quiet learning space with books and resources that
-                            encourage reading, research, and independent learning.
-                        </p>
-                    </div>
-
-                    <div className="facility-card">
-                        <h3>Computer Laboratory</h3>
-
-                        <p>
-                            Students develop digital skills and explore technology
-                            in a practical and engaging environment.
-                        </p>
-                    </div>
-
-                    <div className="facility-card">
-                        <h3>Sports & Recreation</h3>
-
-                        <p>
-                            Students participate in physical activities that
-                            encourage teamwork, discipline, and healthy development.
-                        </p>
-                    </div>
+                    <Card
+                        title="Sports & Recreation"
+                        description="Students participate in physical activities that encourage teamwork, discipline, and healthy development."
+                    />
 
                 </div>
             </section>
 
             <section className="school-life-section">
-                <div className="section-heading">
-                    <p>LIFE AT GREENFIELD</p>
+                <SectionHeading
+                    eyebrow="LIFE AT GREENFIELD"
+                    title="More Than Just the Classroom"
+                    description="We encourage students to discover their interests, develop their talents, and build meaningful relationships beyond the classroom."
+                />
 
-                    <h2>More Than Just the Classroom</h2>
+                <div className="grid gap-6 px-6 md:grid-cols-2 lg:grid-cols-4">
 
-                    <p>
-                        We encourage students to discover their interests,
-                        develop their talents, and build meaningful relationships
-                        beyond the classroom.
-                    </p>
-                </div>
+                    <Card
+                        title="Clubs & Activities"
+                        description="Students can participate in activities that help them discover their interests and develop new skills."
+                    />
 
-                <div className="school-life-cards">
+                    <Card
+                        title="Sports"
+                        description="Sports activities encourage teamwork, discipline, confidence, and an active lifestyle."
+                    />
 
-                    <div className="life-card">
-                        <h3>Clubs & Activities</h3>
-                        <p>
-                            Students can participate in activities that help them
-                            discover their interests and develop new skills.
-                        </p>
-                    </div>
+                    <Card
+                        title="Cultural Activities"
+                        description="Students celebrate culture and creativity through events, performances, and special school programs."
+                    />
 
-                    <div className="life-card">
-                        <h3>Sports</h3>
-                        <p>
-                            Sports activities encourage teamwork, discipline,
-                            confidence, and an active lifestyle.
-                        </p>
-                    </div>
-
-                    <div className="life-card">
-                        <h3>Cultural Activities</h3>
-                        <p>
-                            Students celebrate culture and creativity through
-                            events, performances, and special school programs.
-                        </p>
-                    </div>
-
-                    <div className="life-card">
-                        <h3>Student Development</h3>
-                        <p>
-                            We provide opportunities that help students build
-                            leadership, communication, and problem-solving skills.
-                        </p>
-                    </div>
+                    <Card
+                        title="Student Development"
+                        description="We provide opportunities that help students build leadership, communication, and problem-solving skills."
+                    />
 
                 </div>
             </section>
 
-            <section className="events-section">
-                <div className="section-heading">
-                    <p>WHAT'S HAPPENING</p>
+            <section className="achievements-section">
 
-                    <h2>Upcoming Events</h2>
+                <SectionHeading
+                    eyebrow="STUDENT ACHIEVEMENTS"
+                    title="Celebrating Our Students"
+                    description="We are proud of the dedication, creativity, and achievements of our students both inside and outside the classroom."
+                />
 
-                    <p>
-                        Stay updated with important activities and events
-                        happening at Greenfield School.
+                <div className="grid gap-6 px-6 md:grid-cols-3">
+
+                    <Card
+                        title="Academic Excellence"
+                        description="Our students continue to demonstrate strong performance and dedication to their studies."
+                    />
+
+                    <Card
+                        title="Competitions"
+                        description="Students participate in academic, creative, and extracurricular competitions."
+                    />
+
+                    <Card
+                        title="Leadership"
+                        description="We encourage students to develop leadership skills through responsibility and teamwork."
+                    />
+
+                </div>
+
+            </section>
+
+
+            <section className="bg-green-900 px-6 py-20 text-center">
+
+                <div className="mx-auto max-w-3xl">
+
+                    <p className="mb-3 text-sm font-bold tracking-[0.2em] text-yellow-400">
+                        ADMISSIONS ARE OPEN
                     </p>
-                </div>
 
-                <div className="event-cards">
+                    <h2 className="mb-6 text-3xl font-bold text-white md:text-5xl">
+                        Give Your Child a Brighter Future
+                    </h2>
 
-                    <div className="event-card">
-                        <p>15 OCTOBER 2026</p>
+                    <p className="mb-8 leading-7 text-green-50">
+                        Join Greenfield School and give your child the opportunity
+                        to learn, grow, discover their talents, and prepare for
+                        a successful future.
+                    </p>
 
-                        <h3>Parents and Teachers Meeting</h3>
-
-                        <p>
-                            An opportunity for parents and teachers to discuss
-                            students' progress and development.
-                        </p>
-
-                        <button>Read More</button>
-                    </div>
-
-                    <div className="event-card">
-                        <p>28 OCTOBER 2026</p>
-
-                        <h3>Inter-House Sports</h3>
-
-                        <p>
-                            Students compete in different sporting activities
-                            while developing teamwork and school spirit.
-                        </p>
-
-                        <button>Read More</button>
-                    </div>
-
-                    <div className="event-card">
-                        <p>12 NOVEMBER 2026</p>
-
-                        <h3>Career and Guidance Day</h3>
-
-                        <p>
-                            Students learn about different career paths and
-                            opportunities for their future.
-                        </p>
-
-                        <button>Read More</button>
-                    </div>
+                    <Link
+                        to="/contact"
+                        className="inline-block rounded-full bg-yellow-400 px-7 py-3 font-semibold text-green-950 transition duration-300 hover:-translate-y-1 hover:bg-yellow-300 hover:shadow-lg"
+                    >
+                        Contact Us
+                    </Link>
 
                 </div>
+
             </section>
         </div>
     )
 }
+
+export default Home

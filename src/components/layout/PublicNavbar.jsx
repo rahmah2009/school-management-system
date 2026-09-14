@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 function PublicNavbar() {
+    const [menuOpen, setMenuOpen] = useState(false);
     return (
-        <nav>
-            <h2>Greenfield School</h2>
+        <nav className="bg-green-950 px-6 py-4 text-white shadow-md md:px-12">            <Link to="/" className="text-2xl font-bold text-yellow-400">
+            Greenfield School
+        </Link>
 
-            <ul>
-                <li>
+            <ul
+                className={`${menuOpen ? "flex" : "hidden"
+                    } flex-col gap-4 md:flex md:flex-row md:items-center md:gap-6`}
+            >                <li>
                     <Link to="/">Home</Link>
                 </li>
 
@@ -19,16 +24,23 @@ function PublicNavbar() {
                 </li>
 
                 <li>
-                    <Link to="teachers">Teacher</Link>
+                    <Link to="/teachers">Teachers</Link>
                 </li>
 
                 <li>
-                    <Link to="/done
-                    contact">Contact</Link>
+                    <Link to="/contact">Contact</Link>
                 </li>
             </ul>
+            <button
+                className="md:hidden"
+                onClick={() => setMenuOpen(!menuOpen)}
+            >
+                ☰
+            </button>
+
+
         </nav>
     );
 }
 
-export default PublicNavbar;
+export default PublicNavbar; ``
