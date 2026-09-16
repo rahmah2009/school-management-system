@@ -2,6 +2,8 @@ import { Routes, Route } from "react-router-dom";
 
 import PublicLayout from "./components/layout/PublicLayout";
 import Home from "./pages/public/Home";
+import Contact from "./pages/public/Contact";
+import About from "./pages/public/About";
 
 export default function App() {
   return (
@@ -9,6 +11,8 @@ export default function App() {
 
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/contact" element={<Contact/>}/>
+          <Route path="/about" element={<About/>}/>
         </Route>
 
       </Routes>

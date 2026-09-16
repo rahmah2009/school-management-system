@@ -7,6 +7,8 @@ import heroImage2 from "../../assets/learning.png"
 import heroImage3 from "../../assets/writing.png"
 import heroImage4 from "../../assets/students.png"
 import heroImage5 from "../../assets/girls.png"
+import schoolImage from "../../assets/school.png"
+import principal from "../../assets/Principal.png"
 
 function Home() {
     const heroImages = [heroImage, heroImage2, heroImage3, heroImage4, heroImage5];
@@ -71,9 +73,13 @@ function Home() {
 
             <section className="grid items-center gap-12 px-6 py-20 md:grid-cols-2 md:px-12 lg:px-20">
                 <div className="items-center flex min-h-[350px] justify-center bg-green-100 rounded-3xl shadow-lg">
-                    <span className="text-lg font-semibold text-green-800">
-                        School Image
-                    </span>
+                    {/* <div className="flex min-h-[350px] items-center justify-center overflow-hidden rounded-3xl bg-green-100 shadow-lg"> */}
+                    <img
+                        src={schoolImage}
+                        alt="School Image"
+                        className="h-full w-full object-cover"
+                    />
+                    {/* </div> */}
                 </div>
 
                 <div className="max-w-xl">
@@ -201,15 +207,17 @@ function Home() {
                         guidance, knowledge, and opportunities they need to grow
                         into confident and responsible individuals."
                 />
-                <div className="mx-auto grid max-w-5xl items-center gap-8 px-6 md:grid-cols-2">
+                <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 md:grid-cols-2">
 
-                    <div className="flex min-h-[300px] items-center justify-center rounded-3xl bg-green-100">
-                        <span className="font-semibold text-green-800">
-                            Principal Image
-                        </span>
+                    <div className="h-[620px] overflow-hidden rounded-3xl bg-green-100 shadow-lg">
+                        <img
+                            src={principal}
+                            alt="Principal Picture"
+                            className="h-full w-full object-cover"
+                        />
                     </div>
 
-                    <div>
+                    <div className="max-w-xl">
                         <h3 className="mb-2 text-2xl font-bold text-green-950">
                             Dr. Suleiman Ibroheem
                         </h3>
