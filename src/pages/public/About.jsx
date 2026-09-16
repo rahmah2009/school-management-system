@@ -56,17 +56,17 @@ function About() {
             <div className="mt-8 grid grid-cols-3 gap-4 border-t border-gray-200 pt-6">
 
                 <div>
-                    <h3 className="text-2xl font-bold text-green-950">10+</h3>
+                    <h2 className="text-2xl font-bold text-green-950">10+</h2>
                     <p className="mt-1 text-xs text-gray-500">Years of Excellence</p>
                 </div>
 
                 <div>
-                    <h3 className="text-2xl font-bold text-green-950">500+</h3>
+                    <h2 className="text-2xl font-bold text-green-950">500+</h2>
                     <p className="mt-1 text-xs text-gray-500">Students</p>
                 </div>
 
                 <div>
-                    <h3 className="text-2xl font-bold text-green-950">30+</h3>
+                    <h2 className="text-2xl font-bold text-green-950">30+</h2>
                     <p className="mt-1 text-xs text-gray-500">Dedicated Staff</p>
                 </div>
 
