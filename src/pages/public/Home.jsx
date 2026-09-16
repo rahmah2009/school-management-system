@@ -1,22 +1,39 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import SectionHeading from "../../components/common/SectionHeading";
 import Card from "../../components/common/Card";
+import heroImage from "../../assets/hero.png"
+import heroImage2 from "../../assets/learning.png"
+import heroImage3 from "../../assets/writing.png"
+import heroImage4 from "../../assets/students.png"
+import heroImage5 from "../../assets/girls.png"
 
 function Home() {
+    const heroImages = [heroImage, heroImage2, heroImage3, heroImage4, heroImage5];
+    const [currentImage, setCurrentImage] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentImage((prev) => (prev + 1) % heroImages.length);
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, []);
     return (
         <div className="home-page">
             {/* HERO SECTION */}
-            <section className="relative min-h-[90vh] flex items-center justify-center bg-green-900 px-6 py-20">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-950 via-green-900 to-green-800"></div>
-
-                <div className="relative z-10 max-w-4xl rounded-3xl border border-white/20 bg-white/10 p-8 text-center shadow-2xl backdrop-blur-md md:p-12">
+            <section
+                className="relative flex min-h-[90vh] items-center justify-center bg-cover bg-center bg-no-repeat px-6 py-20"
+                style={{ backgroundImage: `url(${heroImages[currentImage]})` }}
+            >
+                <div className="absolute inset-0 bg-black/40"></div>
+                <div className="relative z-10 w-full max-w-5xl rounded-3xl border border-white/20 bg-white/10 p-10 text-center shadow-2xl backdrop-blur-md md:p-16">
 
                     <p className="mb-4 text-sm font-bold tracking-[0.3em] text-yellow-400">
                         WELCOME TO GREENFIELD SCHOOL
                     </p>
 
-                    <h1 className="mb-6 text-4xl font-bold leading-tight text-white md:text-6xl">
-                        Building Bright Minds,
+                    <h1 className="mb-6 text-3xl font-bold leading-tight text-white sm:text-4xl md:text-6xl">                        Building Bright Minds,
                         <br />
                         <span className="text-yellow-400">
                             Shaping Great Futures
@@ -307,7 +324,7 @@ function Home() {
             </section>
 
 
-            <section className="bg-green-900 px-6 py-20 text-center">
+            <section className="bg-green-900 px-6 py-20 mt-15 text-center">
 
                 <div className="mx-auto max-w-3xl">
 
