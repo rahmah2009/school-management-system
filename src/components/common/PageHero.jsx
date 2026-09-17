@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom"
 
-function PageHero({ breadcrumb, eyebrow, title, highlight, description }) {
-    return (
+function PageHero({ breadcrumb, eyebrow, title, highlight, description, children }) {    return (
         <section className="bg-green-950 px-6 py-24 text-white">
             <div className="mx-auto max-w-6xl">
 

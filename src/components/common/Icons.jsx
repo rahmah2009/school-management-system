@@ -70,3 +70,56 @@ export const Time = (props) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 )
+
+export const Target = (props) => (
+  <svg {...iconProps} {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="12" r="5" />
+    <circle cx="12" cy="12" r="1.5" />
+  </svg>
+);
+
+export const Eye = (props) => (
+  <svg {...iconProps} {...props}>
+    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+export const TrendingUp = (props) => (
+  <svg {...iconProps} {...props}>
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+    <polyline points="17 6 23 6 23 12" />
+  </svg>
+);
+
+export const Heart = (props) => (
+  <svg {...iconProps} {...props}>
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+  </svg>
+);
+
+export const Lightbulb = (props) => (
+  <svg {...iconProps} {...props}>
+    <path d="M9 18h6" />
+    <path d="M10 22h4" />
+    <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
+  </svg>
+);
+
+export const Brain = (props) => (
+  <svg {...iconProps} {...props}>
+    <path d="M9.5 4.5a3.5 3.5 0 0 0-6 2.5A3.5 3.5 0 0 0 5 13.5 3.5 3.5 0 0 0 9 19h1V5a3.5 3.5 0 0 0-.5-.5z" />
+    <path d="M14.5 4.5a3.5 3.5 0 0 1 6 2.5 3.5 3.5 0 0 1-1.5 6.5A3.5 3.5 0 0 1 15 19h-1V5a3.5 3.5 0 0 1 .5-.5z" />
+    <path d="M6 8h2M16 8h2M6 13h3M15 13h3" />
+  </svg>
+);
+
+export const HandHeart = (props) => (
+  <svg {...iconProps} {...props}>
+    <path d="M20 11c-1.5-1.5-3.5-1.5-5 0l-3 3-2-2" />
+    <path d="M2 12l4-4 5 5" />
+    <path d="M7 17l4 4 9-9" />
+    <path d="M14 7.5a2.5 2.5 0 0 0-4-2 2.5 2.5 0 0 0-4 2c0 2.5 4 5 4 5s4-2.5 4-5z" />
+  </svg>
+);
