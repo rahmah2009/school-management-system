@@ -440,6 +440,33 @@ function Academics() {
 
             </section>
 
+            <section className="mx-auto max-w-6xl px-6 py-20">
+
+                <p className="text-sm font-bold tracking-[0.25em] text-yellow-500">
+                    CO-CURRICULAR ACTIVITIES
+                </p>
+
+                <h2 className="mt-3 text-4xl font-bold leading-tight text-green-950">
+                    Growing
+                    <span className="text-yellow-500">
+                        {" "}Beyond the Classroom
+                    </span>
+                </h2>
+
+                <p className="mt-6 max-w-2xl leading-8 text-gray-600">
+                    Students have opportunities to discover their interests,
+                    develop new skills, build confidence, and work with others.
+                </p>
+
+                <div className="mt-10 max-w-md">
+                    <Card
+                        title="Clubs & Societies"
+                        description="Students participate in clubs and societies that help them discover their interests, develop creativity, and build teamwork and leadership skills."
+                    />
+                </div>
+
+            </section>
+
         </div>
     );
 }
