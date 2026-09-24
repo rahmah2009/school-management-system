@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import PageHero from "../../components/common/PageHero";
 import Card from "../../components/common/Card";
 import Learning from "../../assets/writing.png";
@@ -15,88 +16,294 @@ function Academics() {
 
     const classFocus = {
         "JSS 1": [
-            "Computer Basics",
-            "Introduction to Coding",
-            "Communication",
-            "Creativity & Teamwork",
+            {
+                title: "Computer Basics",
+                description:
+                    "Students learn the basic parts of a computer and how to use them effectively.",
+            },
+            {
+                title: "Introduction to Coding",
+                description:
+                    "Students are introduced to programming concepts and learn how simple code works.",
+            },
+            {
+                title: "Communication",
+                description:
+                    "Students develop effective communication skills through speaking, writing, and classroom activities.",
+            },
+            {
+                title: "Creativity & Teamwork",
+                description:
+                    "Students develop creativity while learning how to collaborate and solve problems together.",
+            },
         ],
 
         "JSS 2": [
-            "Digital Skills",
-            "HTML & CSS",
-            "Basic Programming",
-            "Problem-Solving",
-            "Research & Practical Projects",
+            {
+                title: "Digital Skills",
+                description:
+                    "Students improve their ability to use computers and digital tools for learning and everyday tasks.",
+            },
+            {
+                title: "HTML & CSS",
+                description:
+                    "Students learn the basics of creating and styling simple web pages using HTML and CSS.",
+            },
+            {
+                title: "Basic Programming",
+                description:
+                    "Students build a stronger understanding of programming concepts through simple practical exercises.",
+            },
+            {
+                title: "Problem-Solving",
+                description:
+                    "Students learn how to break down challenges and develop logical solutions.",
+            },
+            {
+                title: "Research & Practical Projects",
+                description:
+                    "Students apply their knowledge through research activities and practical projects.",
+            },
         ],
 
         "JSS 3": [
-            "Exam Preparation",
-            "Web Development Projects",
-            "Leadership & Teamwork",
-            "Digital Skills",
-            "Advanced Problem-Solving",
+            {
+                title: "Exam Preparation",
+                description:
+                    "Students strengthen their knowledge and prepare effectively for important examinations.",
+            },
+            {
+                title: "Web Development Projects",
+                description:
+                    "Students apply their web development knowledge by creating practical projects.",
+            },
+            {
+                title: "Leadership & Teamwork",
+                description:
+                    "Students develop leadership qualities and learn how to work effectively with others.",
+            },
+            {
+                title: "Digital Skills",
+                description:
+                    "Students strengthen their digital abilities and learn to use technology confidently.",
+            },
+            {
+                title: "Advanced Problem-Solving",
+                description:
+                    "Students tackle more challenging problems and develop stronger logical thinking skills.",
+            },
         ],
 
         "SS 1": {
             Science: [
-                "Programming",
-                "Web Development",
-                "Laboratory Practice",
-                "Research & Technology",
+                {
+                    title: "Programming",
+                    description:
+                        "Students develop programming knowledge and learn how to create simple software solutions.",
+                },
+                {
+                    title: "Web Development",
+                    description:
+                        "Students learn how websites are built and develop practical web development skills.",
+                },
+                {
+                    title: "Laboratory Practice",
+                    description:
+                        "Students apply scientific concepts through practical laboratory activities and experiments.",
+                },
+                {
+                    title: "Research & Technology",
+                    description:
+                        "Students explore technology and develop research skills through practical learning.",
+                },
             ],
+
             Commercial: [
-                "Entrepreneurship",
-                "Accounting Practice",
-                "Business Skills",
-                "Digital Skills",
+                {
+                    title: "Entrepreneurship",
+                    description:
+                        "Students learn how business ideas are developed and how entrepreneurs identify opportunities.",
+                },
+                {
+                    title: "Accounting Practice",
+                    description:
+                        "Students develop practical skills in recording, organising, and understanding financial information.",
+                },
+                {
+                    title: "Business Skills",
+                    description:
+                        "Students develop useful business knowledge, decision-making skills, and professional habits.",
+                },
+                {
+                    title: "Digital Skills",
+                    description:
+                        "Students learn how digital tools can support business activities and productivity.",
+                },
             ],
+
             Arts: [
-                "Writing & Communication",
-                "Public Speaking",
-                "Research",
-                "Creative Expression",
+                {
+                    title: "Writing & Communication",
+                    description:
+                        "Students develop stronger writing skills and learn how to communicate ideas clearly.",
+                },
+                {
+                    title: "Public Speaking",
+                    description:
+                        "Students build confidence by practising presentations and expressing their ideas clearly.",
+                },
+                {
+                    title: "Research",
+                    description:
+                        "Students learn how to gather, organise, and present information effectively.",
+                },
+                {
+                    title: "Creative Expression",
+                    description:
+                        "Students explore creative ways to express ideas through writing, art, and other activities.",
+                },
             ],
         },
 
         "SS 2": {
             Science: [
-                "Advanced Programming",
-                "Web Development Projects",
-                "Research & Technology",
-                "Problem-Solving",
+                {
+                    title: "Advanced Programming",
+                    description:
+                        "Students deepen their programming knowledge and work with more advanced programming concepts.",
+                },
+                {
+                    title: "Web Development Projects",
+                    description:
+                        "Students build practical websites and apply their web development knowledge to projects.",
+                },
+                {
+                    title: "Research & Technology",
+                    description:
+                        "Students explore technological ideas while developing stronger research and analytical skills.",
+                },
+                {
+                    title: "Problem-Solving",
+                    description:
+                        "Students solve more complex challenges using logical and structured thinking.",
+                },
             ],
+
             Commercial: [
-                "Entrepreneurship",
-                "Business Projects",
-                "Financial Skills",
-                "Digital Business Tools",
+                {
+                    title: "Entrepreneurship",
+                    description:
+                        "Students explore business ideas, planning, innovation, and the skills needed to start a venture.",
+                },
+                {
+                    title: "Business Projects",
+                    description:
+                        "Students apply business concepts through practical projects and real-world scenarios.",
+                },
+                {
+                    title: "Financial Skills",
+                    description:
+                        "Students develop practical knowledge of financial concepts and responsible decision-making.",
+                },
+                {
+                    title: "Digital Business Tools",
+                    description:
+                        "Students learn how digital technologies can improve business operations and productivity.",
+                },
             ],
+
             Arts: [
-                "Advanced Writing",
-                "Research & Presentation",
-                "Public Speaking",
-                "Creative Projects",
+                {
+                    title: "Advanced Writing",
+                    description:
+                        "Students improve their writing skills through more advanced composition and communication activities.",
+                },
+                {
+                    title: "Research & Presentation",
+                    description:
+                        "Students learn how to conduct research and confidently present their findings.",
+                },
+                {
+                    title: "Public Speaking",
+                    description:
+                        "Students strengthen their confidence and communication skills through presentations and discussions.",
+                },
+                {
+                    title: "Creative Projects",
+                    description:
+                        "Students use creativity to develop projects that demonstrate their ideas and skills.",
+                },
             ],
         },
 
         "SS 3": {
             Science: [
-                "Software & Web Projects",
-                "Advanced Problem-Solving",
-                "Research & Technology",
-                "Project Development",
+                {
+                    title: "Software & Web Projects",
+                    description:
+                        "Students apply their technical knowledge to build practical software and web-based projects.",
+                },
+                {
+                    title: "Advanced Problem-Solving",
+                    description:
+                        "Students tackle challenging problems and develop strong analytical and logical thinking skills.",
+                },
+                {
+                    title: "Research & Technology",
+                    description:
+                        "Students conduct research and explore how technology can be applied to solve real-world problems.",
+                },
+                {
+                    title: "Project Development",
+                    description:
+                        "Students plan, develop, and present practical projects that demonstrate their knowledge.",
+                },
             ],
+
             Commercial: [
-                "Business Projects",
-                "Entrepreneurship",
-                "Financial Analysis",
-                "Career Preparation",
+                {
+                    title: "Business Projects",
+                    description:
+                        "Students apply business knowledge by planning and developing practical business projects.",
+                },
+                {
+                    title: "Entrepreneurship",
+                    description:
+                        "Students develop entrepreneurial thinking and learn how to turn ideas into practical opportunities.",
+                },
+                {
+                    title: "Financial Analysis",
+                    description:
+                        "Students develop skills for analysing financial information and making informed business decisions.",
+                },
+                {
+                    title: "Career Preparation",
+                    description:
+                        "Students develop knowledge and skills that help prepare them for future education and career opportunities.",
+                },
             ],
+
             Arts: [
-                "Research Projects",
-                "Public Speaking",
-                "Creative Expression",
-                "Examination Preparation",
+                {
+                    title: "Research Projects",
+                    description:
+                        "Students conduct detailed research and present their findings in a clear and organised way.",
+                },
+                {
+                    title: "Public Speaking",
+                    description:
+                        "Students develop confidence and strong communication skills through presentations and discussions.",
+                },
+                {
+                    title: "Creative Expression",
+                    description:
+                        "Students explore different creative approaches to communicate ideas and express themselves.",
+                },
+                {
+                    title: "Examination Preparation",
+                    description:
+                        "Students review important concepts and prepare systematically for their final examinations.",
+                },
             ],
         },
     };
@@ -205,6 +412,25 @@ function Academics() {
     const selectedFocus = selectedClass.startsWith("SS")
         ? classFocus[selectedClass][selectedStream]
         : classFocus[selectedClass];
+
+    const coCurricularActivities = [
+        {
+            title: "Clubs & Societies",
+            description: "Students participate in clubs and societies that help them discover their interests, develop creativity, and build teamwork and leadership skills.",
+        },
+        {
+            title: "Sports",
+            description: "Students take part in sports activities that promote teamwork, discipline, confidence, and healthy development.",
+        },
+        {
+            title: "Summer School",
+            description: "Students participate in engaging summer programmes that support learning, creativity, practical skills, and personal development.",
+        },
+        {
+            title: "School Trips",
+            description: "Students take part in educational trips that provide real-world experiences, encourage exploration, and make learning more engaging.",
+        },
+    ];
 
     return (
         <div className="academics-page">
@@ -349,9 +575,9 @@ function Academics() {
 
                         {selectedFocus?.map((focus) => (
                             <Card
-                                key={focus}
-                                title={focus}
-                                description="Developing knowledge and practical skills through meaningful learning experiences."
+                                key={focus.title}
+                                title={focus.title}
+                                description={focus.description}
                             />
                         ))}
 
@@ -440,33 +666,70 @@ function Academics() {
 
             </section>
 
-            <section className="mx-auto max-w-6xl px-6 py-20">
+            <section className="mx-auto max-w-6xl px-6 ">
 
                 <p className="text-sm font-bold tracking-[0.25em] text-yellow-500">
                     CO-CURRICULAR ACTIVITIES
                 </p>
 
-                <h2 className="mt-3 text-4xl font-bold leading-tight text-green-950">
-                    Growing
-                    <span className="text-yellow-500">
-                        {" "}Beyond the Classroom
-                    </span>
-                </h2>
-
-                <p className="mt-6 max-w-2xl leading-8 text-gray-600">
-                    Students have opportunities to discover their interests,
-                    develop new skills, build confidence, and work with others.
-                </p>
-
-                <div className="mt-10 max-w-md">
-                    <Card
-                        title="Clubs & Societies"
-                        description="Students participate in clubs and societies that help them discover their interests, develop creativity, and build teamwork and leadership skills."
-                    />
+                <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {coCurricularActivities.map((activity) => (
+                        <Card
+                            key={activity.title}
+                            title={activity.title}
+                            description={activity.description}
+                        />
+                    ))}
                 </div>
-
             </section>
 
+            {/* ACADEMIC CTA */}
+            {/* ACADEMIC CTA */}
+            <section className="mt-15 bg-green-50 px-6 py-20">
+                <div className="mx-auto max-w-4xl text-center">
+
+                    <p className="text-sm font-bold tracking-[0.25em] text-yellow-500">
+                        START YOUR JOURNEY
+                    </p>
+
+                    <h2 className="mt-3 text-4xl font-bold text-green-950">
+                        Ready to Learn,{" "} <span className="text-yellow-500">Grow & Succeed?</span>
+                    </h2>
+
+                    <p className="mx-auto mt-6 max-w-2xl leading-8 text-gray-400">
+                        Discover how Greenfield School combines academic excellence,
+                        practical skills, and meaningful experiences to help every
+                        student reach their potential.
+                    </p>
+
+                    <div className="mt-8 flex flex-wrap justify-center gap-4">
+
+                        <Link
+                            to="/about"
+                            className="rounded-full bg-green-950 px-6 py-3 font-bold text-white transition hover:bg-green-800"
+                        >
+                            Learn More About Us
+                        </Link>
+
+                        <Link
+                            to="/teachers"
+                            className="rounded-full border-2 border-green-950 px-6 py-3 font-bold text-green-950 transition hover:bg-green-950 hover:text-white"
+                        >
+                            Meet Our Teachers
+                        </Link>
+
+                        <Link
+                            to="/contact"
+                            className="rounded-full border-2 border-green-950 px-6 py-3 font-bold text-green-950 transition hover:bg-green-950 hover:text-white"
+                        >
+                            Contact the School
+                        </Link>
+
+                    </div>
+
+
+                </div>
+            </section>
         </div>
     );
 }
