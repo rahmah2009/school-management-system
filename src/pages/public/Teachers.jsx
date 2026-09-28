@@ -196,7 +196,7 @@ function Teachers() {
                 "Supports students in learning about religious teachings, moral values, and responsible behaviour.",
         },
         {
-            name: "Mr. Nura",
+            name: "Mrs. Nurah",
             subject: "Islamic Religious Studies",
             department: "Religious & Moral Studies",
             description:
@@ -220,92 +220,36 @@ function Teachers() {
 
     const departments = [
         {
+            title: "Science & Mathematics",
+            description:
+                "Students build strong foundations in mathematics, logical thinking, numerical reasoning, and problem-solving.",
+        },
+        {
             title: "Science & Technology",
             description:
-                "Students explore science, mathematics, computing, technology, and practical problem-solving.",
+                "Students explore science, computing, technology, practical experiments, and innovative problem-solving.",
         },
         {
             title: "Arts & Humanities",
             description:
-                "Students develop communication, creativity, critical thinking, research, and cultural understanding.",
+                "Students develop communication, creativity, critical thinking, research, and a deeper understanding of society and culture.",
         },
         {
             title: "Commercial Studies",
             description:
-                "Students learn business concepts, financial awareness, entrepreneurship, and practical commercial skills.",
+                "Students learn business concepts, financial awareness, entrepreneurship, commerce, and practical commercial skills.",
         },
         {
-            name: "Mrs. Maimuna",
-            subject: "Mathematics",
-            department: "Science & Mathematics",
+            title: "Religious & Moral Studies",
             description:
-                "Helps students strengthen their mathematical reasoning, accuracy, and confidence through guided practice.",
+                "Students develop moral values, responsible behaviour, good character, and an understanding of religious teachings.",
         },
         {
-            name: "Mr. Faruk",
-            subject: "Statistics",
-            department: "Science & Mathematics",
+            title: "Sports & Physical Development",
             description:
-                "Introduces students to data, statistics, interpretation, and practical mathematical applications.",
-        },
-        {
-            name: "Mrs. Amina",
-            subject: "Information Technology",
-            department: "Science & Technology",
-            description:
-                "Helps students develop practical technology skills and understand the role of digital tools in everyday life.",
-        },
-        {
-            name: "Mr. Sadiq",
-            subject: "Basic Technology",
-            department: "Science & Technology",
-            description:
-                "Guides students through practical technology concepts, design, tools, and creative problem-solving.",
-        },
-        {
-            name: "Mrs. Joy",
-            subject: "History",
-            department: "Arts & Humanities",
-            description:
-                "Helps students explore historical events, cultures, and the lessons they can learn from the past.",
-        },
-        {
-            name: "Mr. Tunde",
-            subject: "Literature",
-            department: "Arts & Humanities",
-            description:
-                "Encourages students to appreciate literature, storytelling, creative expression, and thoughtful analysis.",
-        },
-        {
-            name: "Mrs. Asma'u",
-            subject: "Marketing",
-            department: "Commercial Studies",
-            description:
-                "Introduces students to marketing concepts, customer awareness, communication, and business ideas.",
-        },
-        {
-            name: "Mr. Ahmed",
-            subject: "Financial Education",
-            department: "Commercial Studies",
-            description:
-                "Helps students develop practical knowledge about money management, saving, budgeting, and financial responsibility.",
-        },
-        {
-            name: "Mrs. Binta",
-            subject: "Moral Education",
-            department: "Religious & Moral Studies",
-            description:
-                "Encourages students to develop good character, responsibility, respect, and positive values.",
-        },
-        {
-            name: "Mr. Lawal",
-            subject: "Sports & Physical Education",
-            department: "Sports & Physical Development",
-            description:
-                "Encourages students to participate in physical activities while developing teamwork, discipline, and sportsmanship.",
+                "Students develop teamwork, discipline, coordination, confidence, and healthy habits through physical activities and sports.",
         },
     ];
-
     const teachingPhilosophy = [
         {
             title: "Student-Centered Learning",
@@ -331,6 +275,15 @@ function Teachers() {
                 (teacher) =>
                     teacher.department === selectedDepartment
             );
+
+    const getInitials = (name) => {
+        return name
+            .split(" ")
+            .map((word) => word[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
+    };
 
     return (
         <div className="teachers-page">
@@ -489,6 +442,11 @@ function Teachers() {
                                 title={teacher.name}
                                 description={teacher.description}
                             >
+
+                                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-950 text-xl font-bold text-white">
+                                    {getInitials(teacher.name)}
+                                </div>
+
                                 <div className="mt-4 border-t border-green-100 pt-4">
                                     <p className="font-bold text-green-950">
                                         {teacher.subject}
@@ -530,8 +488,7 @@ function Teachers() {
 
                 </div>
 
-                <div className="mt-10 grid gap-5 md:grid-cols-3">
-
+                <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {departments.map((department) => (
                         <Card
                             key={department.title}
@@ -562,16 +519,15 @@ function Teachers() {
                             </span>
                         </h2>
 
-                        <p className="mt-6 leading-8 text-gray-600">
-                            We believe good teaching goes beyond delivering
-                            lessons. Our educators help students develop the
-                            confidence, skills, and character they need to
-                            succeed.
+                        <p className="mt-6 max-w-2xl font-semibold leading-8 text-green-950">
+                            We believe good teaching goes beyond delivering lessons.
+                            Our educators help students develop the confidence, skills,
+                            and character they need to succeed in school and beyond.
                         </p>
 
                     </div>
 
-                    <div className="mt-10 grid gap-5 md:grid-cols-3">
+                    <div className="mt-12 grid gap-6 md:grid-cols-3">
 
                         {teachingPhilosophy.map((item) => (
                             <Card
@@ -586,7 +542,7 @@ function Teachers() {
                 </div>
 
             </section>
-
+            
             {/* CTA */}
             <section className="mt-15 px-6 py-20">
 

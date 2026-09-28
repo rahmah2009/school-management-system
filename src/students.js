@@ -3,25 +3,21 @@ const students = [
         id: 1,
         name: "Muhammad Garba",
         className: "SS1",
-        createdAt: "2026-09-20",
     },
     {
         id: 2,
         name: "Aishah Ibrahim",
         className: "SS1",
-        createdAt: "2026-09-21",
     },
     {
         id: 3,
         name: "Abdullah Musa",
         className: "SS3",
-        createdAt: "2026-09-22",
     },
     {
         id: 4,
         name: "Fatimah Yusuf",
         className: "JSS3",
-        createdAt: "2026-09-23",
     },
 ];
 
