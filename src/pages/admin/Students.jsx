@@ -23,6 +23,8 @@ function Students() {
     const [studentName, setStudentName] = useState("");
     const [studentClass, setStudentClass] = useState("");
     const [error, setError] = useState("");
+    const [editingStudent, setEditingStudent] = useState(null);
+    const [deletingStudent, setDeletingStudent] = useState(null);
 
     const filteredStudents = students.filter((student) =>
         `${student.name} ${student.className}`
@@ -30,14 +32,33 @@ function Students() {
             .includes(search.toLowerCase())
     );
 
+    const validateStudent = (name, studentClass) => {
+        if (!name || !studentClass) {
+            return "Please enter the student's name and select a class.";
+        }
+
+        const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)+$/;
+
+        if (!namePattern.test(name)) {
+            return "Please enter a valid full name using letters only.";
+        }
+
+        if (name.length < 3) {
+            return "Student name is too short.";
+        }
+
+        return "";
+    };
+
     const handleAddStudent = (e) => {
         e.preventDefault();
 
         const name = studentName.trim();
 
-        // Check that both fields are filled
-        if (!name || !studentClass) {
-            setError("Please enter the student's name and select a class.");
+        const validationError = validateStudent(name, studentClass);
+
+        if (validationError) {
+            setError(validationError);
 
             setTimeout(() => {
                 setError("");
@@ -46,22 +67,17 @@ function Students() {
             return;
         }
 
-        // Name must contain letters and spaces only
-        const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)+$/;
+        console.log("New student:", name, studentClass);
+        console.log("Existing students:", students);
 
-        if (!namePattern.test(name)) {
-            setError("Please enter a valid full name using letters only.");
+        const duplicateStudent = students.some(
+            (student) =>
+                student.name.toLowerCase() === name.toLowerCase() &&
+                student.className === studentClass
+        );
 
-            setTimeout(() => {
-                setError("");
-            }, 2000);
-
-            return;
-        }
-
-        // Name must be at least 3 characters long
-        if (name.length < 3) {
-            setError("Student name is too short.");
+        if (duplicateStudent) {
+            setError("A student with this name already exists in this class.");
 
             setTimeout(() => {
                 setError("");
@@ -88,6 +104,56 @@ function Students() {
         setIsModalOpen(false);
     };
 
+    const handleEditStudent = (student) => {
+        setEditingStudent(student);
+        setStudentName(student.name);
+        setStudentClass(student.className);
+        setError("");
+        setIsModalOpen(true);
+    };
+
+    const handleUpdateStudent = (e) => {
+        e.preventDefault();
+
+        const name = studentName.trim();
+
+        const validationError = validateStudent(name, studentClass);
+
+        if (validationError) {
+            setError(validationError);
+
+            setTimeout(() => {
+                setError("");
+            }, 2000);
+
+            return;
+        }
+
+        setStudents((currentStudents) =>
+            currentStudents.map((student) =>
+                student.id === editingStudent.id
+                    ? {
+                        ...student,
+                        name,
+                        className: studentClass,
+                    }
+                    : student
+            )
+        );
+
+        setStudentName("");
+        setStudentClass("");
+        setEditingStudent(null);
+        setError("");
+        setIsModalOpen(false);
+    };
+
+    const handleDeleteStudent = (studentId) => {
+        setStudents((currentStudents) =>
+            currentStudents.filter((student) => student.id !== studentId)
+        );
+    };
+
     return (
         <div>
 
@@ -104,7 +170,15 @@ function Students() {
                     </p>
                 </div>
 
-                <Button onClick={() => setIsModalOpen(true)}>
+                <Button
+                    onClick={() => {
+                        setEditingStudent(null);
+                        setStudentName("");
+                        setStudentClass("");
+                        setError("");
+                        setIsModalOpen(true);
+                    }}
+                >
                     Add Student
                 </Button>
 
@@ -196,6 +270,23 @@ function Students() {
                                         #{student.id}
                                     </p>
 
+                                    <div className="mt-4 flex justify-end gap-2">
+                                        <Button
+                                            type="button"
+                                            onClick={() => handleEditStudent(student)}
+                                        >
+                                            Edit
+                                        </Button>
+
+                                        <Button
+                                            type="button"
+                                            variant="danger"
+                                            onClick={() => setDeletingStudent(student)}
+                                        >
+                                            Delete
+                                        </Button>
+                                    </div>
+
                                 </div>
                             </Card>
                         ))
@@ -222,10 +313,12 @@ function Students() {
                     setIsModalOpen(false);
                     setError("");
                 }}
-                title="Add Student"
+                title={editingStudent ? "Edit Student" : "Add Student"}
             >
+
+
                 <form
-                    onSubmit={handleAddStudent}
+                    onSubmit={editingStudent ? handleUpdateStudent : handleAddStudent}
                     className="space-y-5"
                 >
 
@@ -269,6 +362,7 @@ function Students() {
                             type="button"
                             onClick={() => {
                                 setIsModalOpen(false);
+                                setEditingStudent(null);
                                 setError("");
                             }}
                         >
@@ -276,7 +370,7 @@ function Students() {
                         </Button>
 
                         <Button type="submit">
-                            Add Student
+                            {editingStudent ? "Save Changes" : "Add Student"}
                         </Button>
 
                     </div>
@@ -284,6 +378,45 @@ function Students() {
                 </form>
             </Modal>
 
+            <Modal
+                isOpen={Boolean(deletingStudent)}
+                onClose={() => setDeletingStudent(null)}
+                title="Delete Student"
+            >
+                <div className="space-y-5">
+
+                    <p className="text-gray-600">
+                        Are you sure you want to delete{" "}
+                        <span className="font-semibold text-green-950">
+                            {deletingStudent?.name}
+                        </span>
+                        ?
+                    </p>
+
+                    <div className="flex justify-end gap-3">
+
+                        <Button
+                            type="button"
+                            onClick={() => setDeletingStudent(null)}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="danger"
+                            onClick={() => {
+                                handleDeleteStudent(deletingStudent.id);
+                                setDeletingStudent(null);
+                            }}
+                        >
+                            Delete
+                        </Button>
+
+                    </div>
+
+                </div>
+            </Modal>
         </div>
     );
 }
