@@ -303,9 +303,9 @@ function About() {
                             CHARACTER & CULTURE
                         </p>
 
-                        <h2 className="mt-4 text-5xl font-bold text-green-950">
+                        <h2 className="mt-4 text-3xl font-bold leading-tight text-green-950 sm:text-4xl lg:text-5xl">
                             Building Character Through
-                            <span className="allura ml-2 text-6xl text-yellow-500">
+                            <span className="allura ml-2 text-5xl text-yellow-500 sm:text-6xl">
                                 GRACE
                             </span>
                         </h2>
@@ -373,9 +373,9 @@ function About() {
                             STUDENT DEVELOPMENT
                         </p>
 
-                        <h2 className="mt-4 text-5xl font-bold text-green-950">
+                        <h2 className="mt-4 text-3xl font-bold leading-tight text-green-950 sm:text-4xl lg:text-5xl">
                             Helping Students
-                            <span className="allura ml-2 text-6xl text-yellow-500">
+                            <span className="allura ml-2 text-5xl text-yellow-500 sm:text-6xl">
                                 LEARN
                             </span>
                         </h2>
@@ -443,9 +443,9 @@ function About() {
                             SCHOOL CHARACTER
                         </p>
 
-                        <h2 className="mt-4 text-5xl font-bold text-green-950">
+                        <h2 className="mt-4 text-3xl font-bold leading-tight text-green-950 sm:text-4xl lg:text-5xl">
                             The Principles Behind
-                            <span className="allura ml-2 text-6xl text-yellow-500">
+                            <span className="allura ml-2 text-5xl text-yellow-500 sm:text-6xl">
                                 PRIDE
                             </span>
                         </h2>
@@ -512,9 +512,9 @@ function About() {
                             OUR STUDENT JOURNEY
                         </p>
 
-                        <h2 className="mt-4 text-5xl font-bold text-green-950">
+                        <h2 className="mt-4 text-3xl font-bold leading-tight text-green-950 sm:text-4xl lg:text-5xl">
                             Helping Every Student
-                            <span className="allura ml-2 text-6xl text-yellow-500">
+                            <span className="allura ml-2 text-5xl text-yellow-500 sm:text-6xl">
                                 SHINE
                             </span>
                         </h2>

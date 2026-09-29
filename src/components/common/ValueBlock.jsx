@@ -1,6 +1,6 @@
 function ValueBlock({ letter, title, description, label, className = "", children }) {
     return (
-        <div className={`rounded-3xl border border-white/10 p-6 text-white transition duration-300 hover:-translate-y-2 hover:shadow-xl ${className}`}>
+        <div className={`rounded-3xl border border-white/10 p-6 text-white transition duration-300 hover:-translate-y-2 hover:shadow-xl w- ${className}`}>
 
             <span className="block text-7xl font-bold leading-none text-white/30">
                 {letter}
