@@ -178,7 +178,7 @@ function Home() {
                 </div>
             </section>
 
-            <section className="grid grid-cols-2 gap-6 bg-green-900 px-6 py-16 text-center md:grid-cols-4">
+            <section className="grid grid-cols-2 gap-6 bg-green-900 mt-7 px-6 py-16 text-center md:grid-cols-4">
                 <div className="rounded-2xl bg-white/10 p-6">
                     <h2 className="text-4xl font-bold text-yellow-400">500+</h2>
                     <p className="mt-2 text-green-50">Students</p>
