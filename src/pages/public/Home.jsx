@@ -72,14 +72,17 @@ function Home() {
             {/* WELCOME SECTION */}
 
             <section className="grid items-center gap-12 px-6 py-20 md:grid-cols-2 md:px-12 lg:px-20">
-                <div className="items-center flex min-h-[350px] justify-center bg-green-100 rounded-3xl shadow-lg">
-                    {/* <div className="flex min-h-[350px] items-center justify-center overflow-hidden rounded-3xl bg-green-100 shadow-lg"> */}
-                    <img
-                        src={schoolImage}
-                        alt="School Image"
-                        className="h-full w-full object-cover"
-                    />
-                    {/* </div> */}
+                {/* Outer container with a responsive aspect ratio to hug the image */}
+                <div className="flex w-full items-center justify-center rounded-3xl shadow-lg p-3 aspect-[4/3] md:aspect-[16/10]">
+
+                    {/* Inner container to clip the corners nicely */}
+                    <div className="w-full h-full overflow-hidden rounded-2xl">
+                        <img
+                            src={schoolImage}
+                            alt="School Image"
+                            className="h-full w-full object-cover"
+                        />
+                    </div>
                 </div>
 
                 <div className="max-w-xl">
