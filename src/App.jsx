@@ -19,7 +19,7 @@ import TeachersAdmin from "./pages/admin/Teachers";
 
 export default function App() {
   return (
-    < className="">
+    <>
       <ScrollToTop />
 
       <Routes>
