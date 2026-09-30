@@ -1,28 +1,10 @@
-const classes = [
-    {
-        id: 1,
-        name: "JSS 1",
-    },
-    {
-        id: 2,
-        name: "JSS 2",
-    },
-    {
-        id: 3,
-        name: "JSS 3",
-    },
-    {
-        id: 4,
-        name: "SS 1",
-    },
-    {
-        id: 5,
-        name: "SS 2",
-    },
-    {
-        id: 6,
-        name: "SS 3",
-    },
+const classesData = [
+    "JSS 1",
+    "JSS 2",
+    "JSS 3",
+    "SS 1",
+    "SS 2",
+    "SS 3",
 ];
 
-export default classes;
+export default classesData;

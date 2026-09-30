@@ -1,30 +1,64 @@
-import { useState } from "react";
-import studentsData from "../../data/students";
+import { useState, useEffect } from "react";
+// import studentsData from "../../data/students";
+import classesData from "../../data/classes";
 
 import Card from "../../components/common/Card";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
 
-const schoolClasses = [
-    "JSS 1",
-    "JSS 2",
-    "JSS 3",
-    "SS 1",
-    "SS 2",
-    "SS 3",
-]
+// const schoolClasses = [
+//     "JSS 1",
+//     "JSS 2",
+//     "JSS 3",
+//     "SS 1",
+//     "SS 2",
+//     "SS 3",
+// ]
+
+const generateStudentId = (students) => {
+    const numbers = students
+        .map((student) => Number(student.id.replace("GfS-", "")))
+        .filter((number) => !Number.isNaN(number));
+
+    const nextNumber = numbers.length > 0
+        ? Math.max(...numbers) + 1
+        : 1;
+
+    return `GfS-${String(nextNumber).padStart(3, "0")}`;
+};
 
 function Students() {
-    const [students, setStudents] = useState(studentsData);
+    const [students, setStudents] = useState(() => {
+        const savedStudents = localStorage.getItem("greenfield_school_students");
+
+        return savedStudents ? JSON.parse(savedStudents) : [];
+    });
     const [search, setSearch] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const [studentName, setStudentName] = useState("");
+    const [firstName, setFirstName] = useState("");
+    const [middleName, setMiddleName] = useState("");
+    const [lastName, setLastName] = useState("");
     const [studentClass, setStudentClass] = useState("");
     const [error, setError] = useState("");
     const [editingStudent, setEditingStudent] = useState(null);
     const [deletingStudent, setDeletingStudent] = useState(null);
+
+    // useEffect(() => {
+    //     const savedStudents = localStorage.getItem("greenfield_school_students");
+
+    //     if (savedStudents) {
+    //         setStudents(JSON.parse(savedStudents));
+    //     }
+    // }, []);
+
+    useEffect(() => {
+        localStorage.setItem(
+            "greenfield_school_students",
+            JSON.stringify(students)
+        );
+    }, [students]);
 
     const filteredStudents = students.filter((student) =>
         `${student.name} ${student.className}`
@@ -53,7 +87,9 @@ function Students() {
     const handleAddStudent = (e) => {
         e.preventDefault();
 
-        const name = studentName.trim();
+        const name = `${firstName} ${middleName} ${lastName}`
+            .trim()
+            .replace(/\s+/g, " ");
 
         const validationError = validateStudent(name, studentClass);
 
@@ -67,27 +103,27 @@ function Students() {
             return;
         }
 
-        console.log("New student:", name, studentClass);
-        console.log("Existing students:", students);
+        // console.log("New student:", name, studentClass);
+        // console.log("Existing students:", students);
 
-        const duplicateStudent = students.some(
-            (student) =>
-                student.name.toLowerCase() === name.toLowerCase() &&
-                student.className === studentClass
-        );
+        // const duplicateStudent = students.some(
+        //     (student) =>
+        //         student.name.toLowerCase() === name.toLowerCase() &&
+        //         student.className === studentClass
+        // );
 
-        if (duplicateStudent) {
-            setError("A student with this name already exists in this class.");
+        // if (duplicateStudent) {
+        //     setError("A student with this name already exists in this class.");
 
-            setTimeout(() => {
-                setError("");
-            }, 2000);
+        //     setTimeout(() => {
+        //         setError("");
+        //     }, 2000);
 
-            return;
-        }
+        //     return;
+        // }
 
         const newStudent = {
-            id: `GfS-${String(students.length + 1).padStart(3, "0")}`,
+            id: generateStudentId(students),
             name,
             className: studentClass,
             createdAt: new Date().toISOString().split("T")[0],
@@ -98,15 +134,32 @@ function Students() {
             newStudent,
         ]);
 
-        setStudentName("");
+        setFirstName("");
+        setMiddleName("");
+        setLastName("");
         setStudentClass("");
         setError("");
         setIsModalOpen(false);
     };
 
     const handleEditStudent = (student) => {
+        const nameParts = student.name.split(" ");
+
+        setFirstName(nameParts[0] || "");
+
+        setMiddleName(
+            nameParts.length > 2
+                ? nameParts.slice(1, -1).join(" ")
+                : ""
+        );
+
+        setLastName(
+            nameParts.length > 1
+                ? nameParts[nameParts.length - 1]
+                : ""
+        );
+
         setEditingStudent(student);
-        setStudentName(student.name);
         setStudentClass(student.className);
         setError("");
         setIsModalOpen(true);
@@ -115,7 +168,9 @@ function Students() {
     const handleUpdateStudent = (e) => {
         e.preventDefault();
 
-        const name = studentName.trim();
+        const name = `${firstName} ${middleName} ${lastName}`
+            .trim()
+            .replace(/\s+/g, " ");
 
         const validationError = validateStudent(name, studentClass);
 
@@ -141,7 +196,9 @@ function Students() {
             )
         );
 
-        setStudentName("");
+        setFirstName("");
+        setMiddleName("");
+        setLastName("");
         setStudentClass("");
         setEditingStudent(null);
         setError("");
@@ -173,7 +230,9 @@ function Students() {
                 <Button
                     onClick={() => {
                         setEditingStudent(null);
-                        setStudentName("");
+                        setFirstName("");
+                        setMiddleName("");
+                        setLastName(""); 
                         setStudentClass("");
                         setError("");
                         setIsModalOpen(true);
@@ -323,11 +382,27 @@ function Students() {
                 >
 
                     <Input
-                        label="Student Name"
+                        label="Student First Name"
                         type="text"
-                        placeholder="Enter student name"
-                        value={studentName}
-                        onChange={(e) => setStudentName(e.target.value)}
+                        placeholder="Enter student first name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                    />
+
+                    <Input
+                        label="Student Middle Name"
+                        type="text"
+                        placeholder="Enter student middle name"
+                        value={middleName}
+                        onChange={(e) => setMiddleName(e.target.value)}
+                    />
+
+                    <Input
+                        label="Student Last Name"
+                        type="text"
+                        placeholder="Enter student last name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
                     />
 
                     <div className="w-full">
@@ -342,7 +417,7 @@ function Students() {
                         >
                             <option value="">Select a class</option>
 
-                            {schoolClasses.map((schoolClass) => (
+                            {classesData.map((schoolClass) => (
                                 <option key={schoolClass} value={schoolClass}>
                                     {schoolClass}
                                 </option>
@@ -363,6 +438,10 @@ function Students() {
                             onClick={() => {
                                 setIsModalOpen(false);
                                 setEditingStudent(null);
+                                setFirstName("");
+                                setMiddleName("");
+                                setLastName("");
+                                setStudentClass("");
                                 setError("");
                             }}
                         >

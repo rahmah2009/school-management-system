@@ -10,6 +10,7 @@ import Contact from "./pages/public/Contact";
 import About from "./pages/public/About";
 import Academics from "./pages/public/Academics";
 import Teachers from "./pages/public/Teachers";
+import Login from "./pages/auth/Login";
 
 import Dashboard from "./pages/admin/Dashboard";
 import Students from "./pages/admin/Students"
@@ -18,7 +19,7 @@ import TeachersAdmin from "./pages/admin/Teachers";
 
 export default function App() {
   return (
-    <>
+    < className="">
       <ScrollToTop />
 
       <Routes>
@@ -30,6 +31,8 @@ export default function App() {
           <Route path="/academics" element={<Academics />} />
           <Route path="/teachers" element={<Teachers />} />
         </Route>
+
+        <Route path="/login" element={<Login />} />
 
         {/* Admin */}
         <Route element={<AdminLayout />}>

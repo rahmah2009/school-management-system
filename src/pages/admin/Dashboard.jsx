@@ -1,11 +1,22 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Users, GraduationCap, School } from "lucide-react";
 import StatCard from "../../components/common/StatCard"
-import studentsData from "../../data/students"
+// import studentsData from "../../data/students"
 import teachersData from "../../data/teachers";
 import classesData from "../../data/classes";
 
 function Dashboard() {
+
+    const [students, setStudents] = useState([]);
+
+useEffect(() => {
+    const savedStudents = localStorage.getItem("greenfield_school_students");
+
+    if (savedStudents) {
+        setStudents(JSON.parse(savedStudents));
+    }
+}, []);
     const today = new Date().toLocaleDateString("en-NG", {
         weekday: "long",
         year: "numeric",
@@ -13,7 +24,7 @@ function Dashboard() {
         day: "numeric",
     });
 
-    const recentStudents = [...studentsData]
+    const recentStudents = [...students]
         .sort(
             (a, b) =>
                 new Date(b.createdAt) - new Date(a.createdAt)
@@ -38,7 +49,7 @@ function Dashboard() {
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <StatCard
                     title="TOTAL STUDENTS"
-                    value={studentsData.length}
+                    value={students.length}
                     icon={<Users />}
                     link="/admin/students"
                 />
