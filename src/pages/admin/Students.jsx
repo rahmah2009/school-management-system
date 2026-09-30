@@ -18,14 +18,14 @@ import Modal from "../../components/common/Modal";
 
 const generateStudentId = (students) => {
     const numbers = students
-        .map((student) => Number(student.id.replace("GfS-", "")))
+        .map((student) => Number(student.id.replace("GfSP-", "")))
         .filter((number) => !Number.isNaN(number));
 
     const nextNumber = numbers.length > 0
         ? Math.max(...numbers) + 1
         : 1;
 
-    return `GfS-${String(nextNumber).padStart(3, "0")}`;
+    return `GfSP-${String(nextNumber).padStart(3, "0")}`;
 };
 
 function Students() {

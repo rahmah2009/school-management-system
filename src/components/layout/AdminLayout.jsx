@@ -1,21 +1,33 @@
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
+
 import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 
 function AdminLayout() {
-  return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <AdminSidebar />
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <AdminHeader />
+    return (
+        <div className="flex min-h-screen bg-gray-50">
 
-        <main style={{ padding: "1rem", flex: 1 }}>
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  );
+            <AdminSidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+            />
+
+            <div className="flex min-w-0 flex-1 flex-col">
+
+                <AdminHeader
+                    onMenuClick={() => setSidebarOpen(true)}
+                />
+
+                <main className="flex-1 p-4 md:p-6">
+                    <Outlet />
+                </main>
+
+            </div>
+        </div>
+    );
 }
 
 export default AdminLayout;
