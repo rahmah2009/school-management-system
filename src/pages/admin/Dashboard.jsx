@@ -9,14 +9,30 @@ import classesData from "../../data/classes";
 function Dashboard() {
 
     const [students, setStudents] = useState([]);
+    const [teachers, setTeachers] = useState([]);
 
-useEffect(() => {
-    const savedStudents = localStorage.getItem("greenfield_school_students");
+    useEffect(() => {
+        const loadDashboardData = () => {
+            const savedStudents = localStorage.getItem(
+                "greenfield_school_students"
+            );
 
-    if (savedStudents) {
-        setStudents(JSON.parse(savedStudents));
-    }
-}, []);
+            const savedTeachers = localStorage.getItem(
+                "greenfield_school_teachers"
+            );
+
+            setStudents(
+                savedStudents ? JSON.parse(savedStudents) : []
+            );
+
+            setTeachers(
+                savedTeachers ? JSON.parse(savedTeachers) : []
+            );
+        };
+
+        loadDashboardData();
+    }, []);
+
     const today = new Date().toLocaleDateString("en-NG", {
         weekday: "long",
         year: "numeric",
@@ -56,7 +72,7 @@ useEffect(() => {
 
                 <StatCard
                     title="TOTAL TEACHERS"
-                    value={teachersData.length}
+                    value={teachers.length}
                     icon={<GraduationCap />}
                     link="/admin/teachers"
                 />

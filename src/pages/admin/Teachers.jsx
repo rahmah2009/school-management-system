@@ -1,24 +1,5 @@
-// import teachersData from "../../data/teachers";
-
-// function Teachers() {
-//     console.log("Teachers data:", teachersData);
-
-//     return (
-//         <div>
-//             <h1 className="text-3xl font-bold text-green-950">
-//                 Teachers
-//             </h1>
-
-//             <p className="mt-2 text-gray-600">
-//                 Manage school teachers here.
-//             </p>
-//         </div>
-//     );
-// }
-
-// export default Teachers;
-
-
+import teachersData from "../../data/teachers";
+import departmentsData from "../../data/departments";
 import { useEffect, useState } from "react";
 import { Edit, Plus, Search, Trash2, X } from "lucide-react";
 
@@ -28,8 +9,45 @@ function Teachers() {
             "greenfield_school_teachers"
         );
 
-        return savedTeachers ? JSON.parse(savedTeachers) : [];
+        if (savedTeachers) {
+            const parsedTeachers = JSON.parse(savedTeachers);
+
+            return parsedTeachers.map((savedTeacher) => {
+                const originalTeacher = teachersData.find(
+                    (teacher) => teacher.id === savedTeacher.id
+                );
+
+                return {
+                    ...originalTeacher,
+                    ...savedTeacher,
+                    email: savedTeacher.email || originalTeacher?.email || "",
+                    phone: savedTeacher.phone || originalTeacher?.phone || "",
+                    description:
+                        savedTeacher.description ||
+                        originalTeacher?.description ||
+                        "",
+                };
+            });
+        }
+
+        return teachersData;
     });
+
+    const formatPhoneNumber = (phone) => {
+        const cleaned = phone.replace(/\D/g, "");
+
+        if (cleaned.startsWith("0") && cleaned.length === 11) {
+            const international = "234" + cleaned.slice(1);
+
+            return `+${international.slice(0, 3)} ${international.slice(3, 6)} ${international.slice(6, 9)} ${international.slice(9)}`;
+        }
+
+        if (cleaned.startsWith("234") && cleaned.length === 13) {
+            return `+${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 9)} ${cleaned.slice(9)}`;
+        }
+
+        return phone;
+    };
 
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedDepartment, setSelectedDepartment] = useState("All");
@@ -41,20 +59,23 @@ function Teachers() {
     const [department, setDepartment] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
+    const [subject, setSubject] = useState("");
+    const [description, setDescription] = useState("");
 
     const [error, setError] = useState("");
 
     const [teacherToDelete, setTeacherToDelete] = useState(null);
+    const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
-    const departments = [
-        "Science & Mathematics",
-        "Arts & Humanities",
-        "Science & Technology",
-        "Commercial Studies",
-        "Languages",
-        "Social Sciences",
-        "Physical Education",
-    ];
+    // const departments = [
+    //     "Science & Mathematics",
+    //     "Arts & Humanities",
+    //     "Science & Technology",
+    //     "Commercial Studies",
+    //     "Languages",
+    //     "Social Sciences",
+    //     "Physical Education",
+    // ];
 
     useEffect(() => {
         localStorage.setItem(
@@ -80,6 +101,8 @@ function Teachers() {
 
     const resetForm = () => {
         setTeacherName("");
+        setSubject("");
+        setDescription("");
         setDepartment("");
         setEmail("");
         setPhone("");
@@ -115,8 +138,32 @@ function Teachers() {
             return;
         }
 
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailPattern.test(email.trim())) {
+            setError("Please enter a valid email address.");
+            return;
+        }
+
         if (!phone.trim()) {
             setError("Please enter the teacher's phone number.");
+            return;
+        }
+
+        const phonePattern = /^(\+234|0)[789][01]\d{8}$/;
+
+        if (!phonePattern.test(phone.trim())) {
+            setError("Please enter a valid Nigerian phone number.");
+            return;
+        }
+
+        if (!subject.trim()) {
+            setError("Subject is required.");
+            return;
+        }
+
+        if (!description.trim()) {
+            setError("Description is required.");
             return;
         }
 
@@ -125,12 +172,14 @@ function Teachers() {
                 currentTeachers.map((teacher) =>
                     teacher.id === editingTeacher.id
                         ? {
-                              ...teacher,
-                              name: teacherName.trim(),
-                              department,
-                              email: email.trim(),
-                              phone: phone.trim(),
-                          }
+                            ...teacher,
+                            name: teacherName.trim(),
+                            subject: subject.trim(),
+                            description: description.trim(),
+                            department,
+                            email: email.trim(),
+                            phone: formatPhoneNumber(phone.trim()),
+                        }
                         : teacher
                 )
             );
@@ -138,11 +187,12 @@ function Teachers() {
             const newTeacher = {
                 id: generateTeacherId(teachers),
                 name: teacherName.trim(),
+                subject: subject.trim(),
+                description: description.trim(),
                 department,
                 email: email.trim(),
-                phone: phone.trim(),
+                phone: formatPhoneNumber(phone.trim()),
             };
-
             setTeachers((currentTeachers) => [
                 ...currentTeachers,
                 newTeacher,
@@ -156,6 +206,8 @@ function Teachers() {
         setEditingTeacher(teacher);
 
         setTeacherName(teacher.name);
+        setSubject(teacher.subject || "");
+        setDescription(teacher.description || "");
         setDepartment(teacher.department);
         setEmail(teacher.email);
         setPhone(teacher.phone);
@@ -169,12 +221,16 @@ function Teachers() {
 
         setTeachers((currentTeachers) =>
             currentTeachers.filter(
-                (teacher) =>
-                    teacher.id !== teacherToDelete.id
+                (teacher) => teacher.id !== teacherToDelete.id
             )
         );
 
         setTeacherToDelete(null);
+    };
+
+    const handleDeleteAll = () => {
+        setTeachers([]);
+        setShowDeleteAllModal(false);
     };
 
     const filteredTeachers = teachers.filter((teacher) => {
@@ -210,13 +266,25 @@ function Teachers() {
                     </p>
                 </div>
 
-                <button
-                    onClick={handleOpenAddForm}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-950 px-5 py-3 font-semibold text-white transition hover:bg-green-800"
-                >
-                    <Plus size={20} />
-                    Add Teacher
-                </button>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                    {teachers.length > 0 && (
+                        <button
+                            onClick={() => setShowDeleteAllModal(true)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700"
+                        >
+                            <Trash2 size={20} />
+                            Delete All
+                        </button>
+                    )}
+
+                    <button
+                        onClick={handleOpenAddForm}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-950 px-5 py-3 font-semibold text-white transition hover:bg-green-800"
+                    >
+                        <Plus size={20} />
+                        Add Teacher
+                    </button>
+                </div>
             </div>
 
             {/* Summary Cards */}
@@ -289,9 +357,9 @@ function Teachers() {
                         All Departments
                     </option>
 
-                    {departments.map((item) => (
-                        <option key={item} value={item}>
-                            {item}
+                    {departmentsData.map((department) => (
+                        <option key={department} value={department}>
+                            {department}
                         </option>
                     ))}
                 </select>
@@ -324,7 +392,7 @@ function Teachers() {
                 ) : (
                     <div className="overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm">
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[800px]">
+                            <table className="w-full min-w-[1200px]">
                                 <thead className="bg-green-50">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-sm font-semibold text-green-950">
@@ -333,6 +401,14 @@ function Teachers() {
 
                                         <th className="px-6 py-4 text-left text-sm font-semibold text-green-950">
                                             Department
+                                        </th>
+
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-green-950">
+                                            Subject
+                                        </th>
+
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-green-950">
+                                            Description
                                         </th>
 
                                         <th className="px-6 py-4 text-left text-sm font-semibold text-green-950">
@@ -398,11 +474,21 @@ function Teachers() {
                                                 </td>
 
                                                 <td className="px-6 py-5 text-sm text-gray-700">
+                                                    {teacher.subject}
+                                                </td>
+
+                                                <td className="px-6 py-5 text-sm text-gray-700">
+                                                    <p className="max-w-xs">
+                                                        {teacher.description}
+                                                    </p>
+                                                </td>
+
+                                                <td className="px-6 py-5 text-sm text-gray-700">
                                                     {teacher.email}
                                                 </td>
 
                                                 <td className="px-6 py-5 text-sm text-gray-700">
-                                                    {teacher.phone}
+                                                    {formatPhoneNumber(teacher.phone || "")}
                                                 </td>
 
                                                 <td className="px-6 py-5">
@@ -507,6 +593,34 @@ function Teachers() {
 
                             <div>
                                 <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Subject
+                                </label>
+
+                                <input
+                                    type="text"
+                                    value={subject}
+                                    onChange={(e) => setSubject(e.target.value)}
+                                    placeholder="e.g. Mathematics"
+                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-green-700 focus:ring-2 focus:ring-green-100"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                                    Description
+                                </label>
+
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    placeholder="Brief description about the teacher..."
+                                    rows={4}
+                                    className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-green-700 focus:ring-2 focus:ring-green-100"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-gray-700">
                                     Department
                                 </label>
 
@@ -523,12 +637,12 @@ function Teachers() {
                                         Select department
                                     </option>
 
-                                    {departments.map((item) => (
+                                    {departmentsData.map((department) => (
                                         <option
-                                            key={item}
-                                            value={item}
+                                            key={department}
+                                            value={department}
                                         >
-                                            {item}
+                                            {department}
                                         </option>
                                     ))}
                                 </select>
@@ -565,14 +679,13 @@ function Teachers() {
                                             e.target.value
                                         )
                                     }
-                                    placeholder="08012345678"
+                                    placeholder="+234 8012345678"
                                     className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-green-700 focus:ring-2 focus:ring-green-100"
                                 />
                             </div>
 
                             <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-                                <button
-                                    type="button"
+                                <button type="button"
                                     onClick={handleCloseForm}
                                     className="rounded-xl border border-gray-200 px-5 py-3 font-semibold text-gray-700 transition hover:bg-gray-50"
                                 >
@@ -629,8 +742,54 @@ function Teachers() {
                     </div>
                 </div>
             )}
+
+            {/* Delete All Teachers Modal */}
+            {showDeleteAllModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-green-950">
+                                Delete All Teachers?
+                            </h2>
+
+                            <button
+                                onClick={() => setShowDeleteAllModal(false)}
+                                className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+                            >
+                                <X size={22} />
+                            </button>
+                        </div>
+
+                        <p className="mt-4 text-gray-600">
+                            Are you sure you want to delete all{" "}
+                            <span className="font-semibold text-gray-900">
+                                {teachers.length} teachers
+                            </span>
+                            ? This action cannot be undone.
+                        </p>
+
+                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                            <button
+                                onClick={() => setShowDeleteAllModal(false)}
+                                className="rounded-xl border border-gray-200 px-5 py-3 font-semibold text-gray-700 transition hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={handleDeleteAll}
+                                className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700"
+                            >
+                                Delete All Teachers
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
 export default Teachers;
+
+

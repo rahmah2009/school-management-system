@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 // import studentsData from "../../data/students";
 import classesData from "../../data/classes";
 
@@ -18,7 +19,10 @@ import Modal from "../../components/common/Modal";
 
 const generateStudentId = (students) => {
     const numbers = students
-        .map((student) => Number(student.id.replace("GfSP-", "")))
+        .map((student) => {
+            const match = student.id.match(/(\d+)$/);
+            return match ? Number(match[1]) : NaN;
+        })
         .filter((number) => !Number.isNaN(number));
 
     const nextNumber = numbers.length > 0
@@ -44,6 +48,10 @@ function Students() {
     const [error, setError] = useState("");
     const [editingStudent, setEditingStudent] = useState(null);
     const [deletingStudent, setDeletingStudent] = useState(null);
+    const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+    const [searchParams] = useSearchParams();
+    const classFilter = searchParams.get("class");
+
 
     // useEffect(() => {
     //     const savedStudents = localStorage.getItem("greenfield_school_students");
@@ -60,11 +68,16 @@ function Students() {
         );
     }, [students]);
 
-    const filteredStudents = students.filter((student) =>
-        `${student.name} ${student.className}`
+    const filteredStudents = students.filter((student) => {
+        const matchesSearch = `${student.name} ${student.className}`
             .toLowerCase()
-            .includes(search.toLowerCase())
-    );
+            .includes(search.toLowerCase());
+
+        const matchesClass =
+            !classFilter || student.className === classFilter;
+
+        return matchesSearch && matchesClass;
+    });
 
     const validateStudent = (name, studentClass) => {
         if (!name || !studentClass) {
@@ -211,6 +224,11 @@ function Students() {
         );
     };
 
+    const handleDeleteAllStudents = () => {
+        setStudents([]);
+        setIsDeleteAllOpen(false);
+    };
+
     return (
         <div>
 
@@ -227,19 +245,30 @@ function Students() {
                     </p>
                 </div>
 
-                <Button
-                    onClick={() => {
-                        setEditingStudent(null);
-                        setFirstName("");
-                        setMiddleName("");
-                        setLastName(""); 
-                        setStudentClass("");
-                        setError("");
-                        setIsModalOpen(true);
-                    }}
-                >
-                    Add Student
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                    <Button
+                        onClick={() => {
+                            setEditingStudent(null);
+                            setFirstName("");
+                            setMiddleName("");
+                            setLastName("");
+                            setStudentClass("");
+                            setError("");
+                            setIsModalOpen(true);
+                        }}
+                    >
+                        Add Student
+                    </Button>
+
+                    <Button
+                        type="button"
+                        variant="danger"
+                        disabled={students.length === 0}
+                        onClick={() => setIsDeleteAllOpen(true)}
+                    >
+                        Delete All
+                    </Button>
+                </div>
 
             </div>
 
@@ -418,8 +447,8 @@ function Students() {
                             <option value="">Select a class</option>
 
                             {classesData.map((schoolClass) => (
-                                <option key={schoolClass} value={schoolClass}>
-                                    {schoolClass}
+                                <option key={schoolClass.id} value={schoolClass.name}>
+                                    {schoolClass.name}
                                 </option>
                             ))}
                         </select>
@@ -496,8 +525,50 @@ function Students() {
 
                 </div>
             </Modal>
+            <Modal
+                isOpen={isDeleteAllOpen}
+                onClose={() => setIsDeleteAllOpen(false)}
+                title="Delete All Students"
+            >
+                <div className="space-y-5">
+
+                    <p className="text-gray-600">
+                        Are you sure you want to delete{" "}
+                        <span className="font-semibold text-red-600">
+                            all {students.length} students
+                        </span>
+                        ?
+                    </p>
+
+                    <p className="text-sm text-gray-500">
+                        This will permanently remove all student records from this
+                        browser.
+                    </p>
+
+                    <div className="flex justify-end gap-3">
+
+                        <Button
+                            type="button"
+                            onClick={() => setIsDeleteAllOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="danger"
+                            onClick={handleDeleteAllStudents}
+                        >
+                            Delete All
+                        </Button>
+
+                    </div>
+
+                </div>
+            </Modal>
         </div>
     );
 }
 
 export default Students;
+
