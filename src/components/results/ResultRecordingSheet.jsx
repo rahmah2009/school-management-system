@@ -21,7 +21,17 @@ function ResultRecordingSheet() {
         );
 
         if (savedSessions) {
-            setSessions(JSON.parse(savedSessions));
+            const parsedSessions = JSON.parse(savedSessions);
+
+            setSessions(parsedSessions);
+
+            const activeSession = parsedSessions.find(
+                (session) => session.isActive
+            );
+
+            if (activeSession) {
+                setSelectedSession(activeSession.id);
+            }
         }
     }, []);
 
@@ -106,28 +116,22 @@ function ResultRecordingSheet() {
 
                     <select
                         value={selectedSession}
-                        onChange={(e) =>
-                            setSelectedSession(e.target.value)
-                        }
+                        onChange={(e) => setSelectedSession(e.target.value)}
                         className="w-full rounded-xl border border-green-100 bg-white px-4 py-3 outline-none focus:border-green-950 focus:ring-2 focus:ring-green-950/10"
                     >
                         <option value="">
                             Select session
                         </option>
 
-                        {sessions
-                            .filter(
-                                (session) =>
-                                    session.isActive
-                            )
-                            .map((session) => (
-                                <option
-                                    key={session.id}
-                                    value={session.id}
-                                >
-                                    {session.name}
-                                </option>
-                            ))}
+                        {sessions.map((session) => (
+                            <option
+                                key={session.id}
+                                value={session.id}
+                            >
+                                {session.name}
+                                {session.isActive}
+                            </option>
+                        ))}
                     </select>
                 </div>
 
@@ -155,7 +159,6 @@ function ResultRecordingSheet() {
                         </option>
                     </select>
                 </div>
-
             </div>
         </div>
     );
