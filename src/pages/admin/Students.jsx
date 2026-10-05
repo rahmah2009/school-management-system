@@ -1,21 +1,12 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-// import studentsData from "../../data/students";
+import { useSearchParams } from "react-router-dom";
+
 import classesData from "../../data/classes";
 
 import Card from "../../components/common/Card";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
-
-// const schoolClasses = [
-//     "JSS 1",
-//     "JSS 2",
-//     "JSS 3",
-//     "SS 1",
-//     "SS 2",
-//     "SS 3",
-// ]
 
 const generateStudentId = (students) => {
     const numbers = students
@@ -25,19 +16,23 @@ const generateStudentId = (students) => {
         })
         .filter((number) => !Number.isNaN(number));
 
-    const nextNumber = numbers.length > 0
-        ? Math.max(...numbers) + 1
-        : 1;
+    const nextNumber =
+        numbers.length > 0
+            ? Math.max(...numbers) + 1
+            : 1;
 
     return `GfSP-${String(nextNumber).padStart(3, "0")}`;
 };
 
 function Students() {
     const [students, setStudents] = useState(() => {
-        const savedStudents = localStorage.getItem("greenfield_school_students");
+        const savedStudents = localStorage.getItem(
+            "greenfield_school_students"
+        );
 
         return savedStudents ? JSON.parse(savedStudents) : [];
     });
+
     const [search, setSearch] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -45,21 +40,17 @@ function Students() {
     const [middleName, setMiddleName] = useState("");
     const [lastName, setLastName] = useState("");
     const [studentClass, setStudentClass] = useState("");
+    const [department, setDepartment] = useState("");
+
     const [error, setError] = useState("");
     const [editingStudent, setEditingStudent] = useState(null);
     const [deletingStudent, setDeletingStudent] = useState(null);
     const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+
     const [searchParams] = useSearchParams();
     const classFilter = searchParams.get("class");
 
-
-    // useEffect(() => {
-    //     const savedStudents = localStorage.getItem("greenfield_school_students");
-
-    //     if (savedStudents) {
-    //         setStudents(JSON.parse(savedStudents));
-    //     }
-    // }, []);
+    const isSeniorSecondary = studentClass.startsWith("SS");
 
     useEffect(() => {
         localStorage.setItem(
@@ -79,9 +70,13 @@ function Students() {
         return matchesSearch && matchesClass;
     });
 
-    const validateStudent = (name, studentClass) => {
+    const validateStudent = (name, studentClass, department) => {
         if (!name || !studentClass) {
             return "Please enter the student's name and select a class.";
+        }
+
+        if (studentClass.startsWith("SS") && !department) {
+            return "Please select a department for SS students.";
         }
 
         const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)+$/;
@@ -104,7 +99,11 @@ function Students() {
             .trim()
             .replace(/\s+/g, " ");
 
-        const validationError = validateStudent(name, studentClass);
+        const validationError = validateStudent(
+            name,
+            studentClass,
+            department
+        );
 
         if (validationError) {
             setError(validationError);
@@ -116,29 +115,11 @@ function Students() {
             return;
         }
 
-        // console.log("New student:", name, studentClass);
-        // console.log("Existing students:", students);
-
-        // const duplicateStudent = students.some(
-        //     (student) =>
-        //         student.name.toLowerCase() === name.toLowerCase() &&
-        //         student.className === studentClass
-        // );
-
-        // if (duplicateStudent) {
-        //     setError("A student with this name already exists in this class.");
-
-        //     setTimeout(() => {
-        //         setError("");
-        //     }, 2000);
-
-        //     return;
-        // }
-
         const newStudent = {
             id: generateStudentId(students),
             name,
             className: studentClass,
+            department: isSeniorSecondary ? department : "",
             createdAt: new Date().toISOString().split("T")[0],
         };
 
@@ -151,6 +132,7 @@ function Students() {
         setMiddleName("");
         setLastName("");
         setStudentClass("");
+        setDepartment("");
         setError("");
         setIsModalOpen(false);
     };
@@ -174,6 +156,7 @@ function Students() {
 
         setEditingStudent(student);
         setStudentClass(student.className);
+        setDepartment(student.department || "");
         setError("");
         setIsModalOpen(true);
     };
@@ -185,7 +168,11 @@ function Students() {
             .trim()
             .replace(/\s+/g, " ");
 
-        const validationError = validateStudent(name, studentClass);
+        const validationError = validateStudent(
+            name,
+            studentClass,
+            department
+        );
 
         if (validationError) {
             setError(validationError);
@@ -204,6 +191,9 @@ function Students() {
                         ...student,
                         name,
                         className: studentClass,
+                        department: studentClass.startsWith("SS")
+                            ? department
+                            : "",
                     }
                     : student
             )
@@ -213,6 +203,7 @@ function Students() {
         setMiddleName("");
         setLastName("");
         setStudentClass("");
+        setDepartment("");
         setEditingStudent(null);
         setError("");
         setIsModalOpen(false);
@@ -220,7 +211,9 @@ function Students() {
 
     const handleDeleteStudent = (studentId) => {
         setStudents((currentStudents) =>
-            currentStudents.filter((student) => student.id !== studentId)
+            currentStudents.filter(
+                (student) => student.id !== studentId
+            )
         );
     };
 
@@ -253,6 +246,7 @@ function Students() {
                             setMiddleName("");
                             setLastName("");
                             setStudentClass("");
+                            setDepartment("");
                             setError("");
                             setIsModalOpen(true);
                         }}
@@ -358,10 +352,21 @@ function Students() {
                                         #{student.id}
                                     </p>
 
+                                    {student.department && (
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            Department:{" "}
+                                            <span className="font-semibold text-green-950">
+                                                {student.department}
+                                            </span>
+                                        </p>
+                                    )}
+
                                     <div className="mt-4 flex justify-end gap-2">
                                         <Button
                                             type="button"
-                                            onClick={() => handleEditStudent(student)}
+                                            onClick={() =>
+                                                handleEditStudent(student)
+                                            }
                                         >
                                             Edit
                                         </Button>
@@ -369,7 +374,9 @@ function Students() {
                                         <Button
                                             type="button"
                                             variant="danger"
-                                            onClick={() => setDeletingStudent(student)}
+                                            onClick={() =>
+                                                setDeletingStudent(student)
+                                            }
                                         >
                                             Delete
                                         </Button>
@@ -394,19 +401,23 @@ function Students() {
 
             </section>
 
-            {/* ADD STUDENT MODAL */}
+            {/* ADD / EDIT STUDENT MODAL */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => {
                     setIsModalOpen(false);
+                    setEditingStudent(null);
                     setError("");
                 }}
                 title={editingStudent ? "Edit Student" : "Add Student"}
             >
 
-
                 <form
-                    onSubmit={editingStudent ? handleUpdateStudent : handleAddStudent}
+                    onSubmit={
+                        editingStudent
+                            ? handleUpdateStudent
+                            : handleAddStudent
+                    }
                     className="space-y-5"
                 >
 
@@ -415,7 +426,9 @@ function Students() {
                         type="text"
                         placeholder="Enter student first name"
                         value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        onChange={(e) =>
+                            setFirstName(e.target.value)
+                        }
                     />
 
                     <Input
@@ -423,7 +436,9 @@ function Students() {
                         type="text"
                         placeholder="Enter student middle name"
                         value={middleName}
-                        onChange={(e) => setMiddleName(e.target.value)}
+                        onChange={(e) =>
+                            setMiddleName(e.target.value)
+                        }
                     />
 
                     <Input
@@ -431,9 +446,12 @@ function Students() {
                         type="text"
                         placeholder="Enter student last name"
                         value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
+                        onChange={(e) =>
+                            setLastName(e.target.value)
+                        }
                     />
 
+                    {/* CLASS */}
                     <div className="w-full">
                         <label className="mb-2 block text-sm font-semibold text-green-950">
                             Class
@@ -441,18 +459,58 @@ function Students() {
 
                         <select
                             value={studentClass}
-                            onChange={(e) => setStudentClass(e.target.value)}
+                            onChange={(e) =>
+                                setStudentClass(e.target.value)
+                            }
                             className="w-full rounded-xl border border-green-100 bg-white px-4 py-3 outline-none transition focus:border-green-950 focus:ring-2 focus:ring-green-950/10"
                         >
-                            <option value="">Select a class</option>
+                            <option value="">
+                                Select a class
+                            </option>
 
                             {classesData.map((schoolClass) => (
-                                <option key={schoolClass.id} value={schoolClass.name}>
+                                <option
+                                    key={schoolClass.id}
+                                    value={schoolClass.name}
+                                >
                                     {schoolClass.name}
                                 </option>
                             ))}
                         </select>
                     </div>
+
+                    {/* DEPARTMENT */}
+                    {isSeniorSecondary && (
+                        <div className="w-full">
+                            <label className="mb-2 block text-sm font-semibold text-green-950">
+                                Department
+                            </label>
+
+                            <select
+                                value={department}
+                                onChange={(e) =>
+                                    setDepartment(e.target.value)
+                                }
+                                className="w-full rounded-xl border border-green-100 bg-white px-4 py-3 outline-none focus:border-green-950 focus:ring-2 focus:ring-green-950/10"
+                            >
+                                <option value="">
+                                    Select department
+                                </option>
+
+                                <option value="Science">
+                                    Science
+                                </option>
+
+                                <option value="Arts">
+                                    Arts
+                                </option>
+
+                                <option value="Commercial">
+                                    Commercial
+                                </option>
+                            </select>
+                        </div>
+                    )}
 
                     {error && (
                         <p className="rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-600">
@@ -471,6 +529,7 @@ function Students() {
                                 setMiddleName("");
                                 setLastName("");
                                 setStudentClass("");
+                                setDepartment("");
                                 setError("");
                             }}
                         >
@@ -478,7 +537,9 @@ function Students() {
                         </Button>
 
                         <Button type="submit">
-                            {editingStudent ? "Save Changes" : "Add Student"}
+                            {editingStudent
+                                ? "Save Changes"
+                                : "Add Student"}
                         </Button>
 
                     </div>
@@ -486,6 +547,7 @@ function Students() {
                 </form>
             </Modal>
 
+            {/* DELETE STUDENT MODAL */}
             <Modal
                 isOpen={Boolean(deletingStudent)}
                 onClose={() => setDeletingStudent(null)}
@@ -505,7 +567,9 @@ function Students() {
 
                         <Button
                             type="button"
-                            onClick={() => setDeletingStudent(null)}
+                            onClick={() =>
+                                setDeletingStudent(null)
+                            }
                         >
                             Cancel
                         </Button>
@@ -514,7 +578,9 @@ function Students() {
                             type="button"
                             variant="danger"
                             onClick={() => {
-                                handleDeleteStudent(deletingStudent.id);
+                                handleDeleteStudent(
+                                    deletingStudent.id
+                                );
                                 setDeletingStudent(null);
                             }}
                         >
@@ -525,6 +591,8 @@ function Students() {
 
                 </div>
             </Modal>
+
+            {/* DELETE ALL STUDENTS MODAL */}
             <Modal
                 isOpen={isDeleteAllOpen}
                 onClose={() => setIsDeleteAllOpen(false)}
@@ -541,15 +609,17 @@ function Students() {
                     </p>
 
                     <p className="text-sm text-gray-500">
-                        This will permanently remove all student records from this
-                        browser.
+                        This will permanently remove all student records
+                        from this browser.
                     </p>
 
                     <div className="flex justify-end gap-3">
 
                         <Button
                             type="button"
-                            onClick={() => setIsDeleteAllOpen(false)}
+                            onClick={() =>
+                                setIsDeleteAllOpen(false)
+                            }
                         >
                             Cancel
                         </Button>
@@ -566,9 +636,9 @@ function Students() {
 
                 </div>
             </Modal>
+
         </div>
     );
 }
 
 export default Students;
-

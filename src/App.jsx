@@ -17,6 +17,7 @@ import Students from "./pages/admin/Students"
 import Classes from "./pages/admin/Classes"
 import TeachersAdmin from "./pages/admin/Teachers";
 import Sessions from "./pages/admin/Sessions";
+import Results from "./pages/admin/Results";
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/admin/teachers" element={<TeachersAdmin />} />
           <Route path="/admin/classes" element={<Classes />} />
           <Route path="/admin/sessions" element={<Sessions />} />
+          <Route path="/admin/results" element={<Results />} />
         </Route>
       </Routes>
     </>
