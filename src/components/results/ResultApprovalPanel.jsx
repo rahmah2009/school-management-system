@@ -1,5 +1,4 @@
-
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const RESULTS_KEY = "greenfield_school_results";
 const STUDENTS_KEY = "greenfield_school_students";
@@ -15,33 +14,8 @@ function readArray(key) {
   }
 }
 
-// Normalize statuses so "Returned", "returned for correction",
-// and "returned" are handled consistently.
 function normalizeStatus(status) {
-  const value = String(status || "draft")
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, "_");
-
-  if (
-    ["submitted", "pending", "awaiting_approval", "submitted_for_review"]
-      .includes(value)
-  ) {
-    return "submitted";
-  }
-
-  if (value === "approved") {
-    return "approved";
-  }
-
-  if (
-    ["returned", "returned_for_correction", "needs_correction"]
-      .includes(value)
-  ) {
-    return "returned";
-  }
-
-  return "draft";
+  return String(status || "draft").trim().toLowerCase();
 }
 
 function getResultKey(result) {
@@ -56,69 +30,45 @@ function notifyResultsUpdated() {
   window.dispatchEvent(new Event("greenfield-results-updated"));
 }
 
-function getValidScores(result) {
-  return Object.values(result?.marks || {})
-    .filter((score) => {
-      if (
-        !score ||
-        score.ca === "" ||
-        score.ca == null ||
-        score.exam === "" ||
-        score.exam == null
-      ) {
-        return false;
-      }
-
-      const ca = Number(score.ca);
-      const exam = Number(score.exam);
-
-      return (
-        Number.isFinite(ca) &&
-        Number.isFinite(exam) &&
-        ca >= 0 &&
-        ca <= 20 &&
-        exam >= 0 &&
-        exam <= 80
-      );
-    })
-    .map((score) => Number(score.ca) + Number(score.exam));
-}
-
 function ResultApprovalPanel() {
   const [results, setResults] = useState([]);
   const [students, setStudents] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [feedback, setFeedback] = useState({});
   const [message, setMessage] = useState("");
-  const [busyKey, setBusyKey] = useState("");
+  const [savingKey, setSavingKey] = useState("");
+  const [confirmAction, setConfirmAction] = useState(null);
 
-  const refresh = useCallback(() => {
+  function refresh() {
     setResults(readArray(RESULTS_KEY));
     setStudents(readArray(STUDENTS_KEY));
     setSessions(readArray(SESSIONS_KEY));
-  }, []);
+  }
 
   useEffect(() => {
-    refresh();
+    function handleRefresh() {
+      refresh();
+    }
 
-    window.addEventListener("focus", refresh);
-    window.addEventListener("storage", refresh);
+    handleRefresh();
+
+    window.addEventListener("focus", handleRefresh);
+    window.addEventListener("storage", handleRefresh);
     window.addEventListener(
       "greenfield-results-updated",
-      refresh
+      handleRefresh
     );
 
     return () => {
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("storage", refresh);
+      window.removeEventListener("focus", handleRefresh);
+      window.removeEventListener("storage", handleRefresh);
       window.removeEventListener(
         "greenfield-results-updated",
-        refresh
+        handleRefresh
       );
     };
-  }, [refresh]);
+  }, []);
 
-  // Always calculate counters from the latest component state.
   const submittedResults = results.filter(
     (result) => normalizeStatus(result.status) === "submitted"
   );
@@ -147,32 +97,8 @@ function ResultApprovalPanel() {
     );
   }
 
-  function getSubjectCount(result) {
-    return getValidScores(result).length;
-  }
-
-  function getAverage(result) {
-    const scores = getValidScores(result);
-
-    if (scores.length === 0) return "—";
-
-    return (
-      scores.reduce((sum, score) => sum + score, 0) /
-      scores.length
-    ).toFixed(1);
-  }
-
-  function updateFeedback(resultKey, value) {
-    setFeedback((current) => ({
-      ...current,
-      [resultKey]: value,
-    }));
-
-    setMessage("");
-  }
-
   function updateResult(resultKey, action) {
-    if (busyKey) return;
+    if (savingKey) return;
 
     if (!["approve", "return"].includes(action)) {
       setMessage("Invalid review action.");
@@ -183,16 +109,15 @@ function ResultApprovalPanel() {
 
     if (action === "return" && !note) {
       setMessage(
-        "Enter a reason before returning a result for correction."
+        "Enter a correction reason before returning this result."
       );
       return;
     }
 
-    setBusyKey(resultKey);
+    setSavingKey(resultKey);
     setMessage("");
 
     try {
-      // Read the latest saved data rather than relying on stale React state.
       const currentResults = readArray(RESULTS_KEY);
 
       const target = currentResults.find(
@@ -209,7 +134,9 @@ function ResultApprovalPanel() {
 
       if (normalizeStatus(target.status) !== "submitted") {
         setMessage(
-          "This result is no longer awaiting review. The panel has been refreshed."
+          `This result is currently "${normalizeStatus(
+            target.status
+          )}" and is no longer awaiting review.`
         );
         refresh();
         return;
@@ -241,14 +168,30 @@ function ResultApprovalPanel() {
         };
       });
 
-      // Save first. Update the UI only after saving succeeds.
       localStorage.setItem(
         RESULTS_KEY,
         JSON.stringify(updatedResults)
       );
 
-      // Re-read persisted data so counters reflect what was actually saved.
-      setResults(readArray(RESULTS_KEY));
+      const savedResults = readArray(RESULTS_KEY);
+
+      const savedTarget = savedResults.find(
+        (result) => getResultKey(result) === resultKey
+      );
+
+      const expectedStatus =
+        action === "approve" ? "approved" : "returned";
+
+      if (
+        !savedTarget ||
+        normalizeStatus(savedTarget.status) !== expectedStatus
+      ) {
+        throw new Error(
+          "The saved result status could not be verified."
+        );
+      }
+
+      setResults(savedResults);
 
       setFeedback((current) => {
         const next = { ...current };
@@ -258,26 +201,102 @@ function ResultApprovalPanel() {
 
       setMessage(
         action === "approve"
-          ? "Result approved successfully. It is now locked against normal editing."
-          : "Result returned for correction. The correction reason has been saved."
+          ? "Result approved successfully. The approved counter has been updated."
+          : "Result returned for correction. The returned counter has been updated."
       );
 
       notifyResultsUpdated();
     } catch (error) {
-      console.error("Could not update result status:", error);
+      console.error("Could not update result:", error);
+
       setMessage(
-        "Could not save the review decision. Check browser storage and try again."
+        error instanceof Error &&
+          error.message.includes("verified")
+          ? error.message
+          : "Unable to save this result. Check browser storage and try again."
       );
+
+      refresh();
     } finally {
-      setBusyKey("");
+      setSavingKey("");
     }
+  }
+
+  function getSubjectCount(result) {
+    return Object.keys(result.marks || {}).length;
+  }
+
+  function getAverage(result) {
+    const scores = Object.values(result.marks || {})
+      .filter((score) => {
+        if (
+          !score ||
+          score.ca === "" ||
+          score.ca === undefined ||
+          score.exam === "" ||
+          score.exam === undefined
+        ) {
+          return false;
+        }
+
+        const ca = Number(score.ca);
+        const exam = Number(score.exam);
+
+        return (
+          Number.isFinite(ca) &&
+          Number.isFinite(exam) &&
+          ca >= 0 &&
+          ca <= 20 &&
+          exam >= 0 &&
+          exam <= 80
+        );
+      })
+      .map((score) => Number(score.ca) + Number(score.exam));
+
+    if (scores.length === 0) return "—";
+
+    return (
+      scores.reduce((sum, score) => sum + score, 0) /
+      scores.length
+    ).toFixed(1);
+  }
+
+  function openConfirmation(result, action) {
+    const resultKey = getResultKey(result);
+
+    if (action === "return" && !String(feedback[resultKey] || "").trim()) {
+      setMessage(
+        "Enter a correction reason before returning this result."
+      );
+      return;
+    }
+
+    setMessage("");
+
+    setConfirmAction({
+      type: action,
+      resultKey,
+      studentName: getStudent(result.studentId)?.name || "this student",
+      sessionName: getSession(result.sessionId)?.name || "Unknown session",
+      term: result.term || "Unknown term",
+    });
+  }
+
+  function confirmReviewAction() {
+    if (!confirmAction || savingKey) return;
+
+    const { resultKey, type } = confirmAction;
+
+    setConfirmAction(null);
+    updateResult(resultKey, type);
   }
 
   return (
     <section className="space-y-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+      {/* HEADER */}
       <div>
         <h2 className="text-xl font-bold text-green-950">
-          Results Review &amp; Approval
+          Results Review & Approval
         </h2>
 
         <p className="mt-1 text-sm text-gray-600">
@@ -312,13 +331,14 @@ function ResultApprovalPanel() {
         </div>
 
         <div className="rounded-xl bg-gray-100 p-4">
-          <p className="text-sm text-gray-600">Drafts</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
+          <p className="text-sm text-gray-700">Drafts</p>
+          <p className="mt-1 text-2xl font-bold text-gray-950">
             {draftCount}
           </p>
         </div>
       </div>
 
+      {/* FEEDBACK MESSAGE */}
       {message && (
         <div
           role="status"
@@ -329,9 +349,10 @@ function ResultApprovalPanel() {
         </div>
       )}
 
+      {/* SUBMITTED RESULTS */}
       {submittedResults.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center">
-          <div className="mb-2 text-3xl">✓</div>
+          <div className="mb-2 text-3xl text-green-800">✓</div>
 
           <h3 className="font-semibold text-gray-800">
             No results awaiting review
@@ -339,7 +360,8 @@ function ResultApprovalPanel() {
 
           <p className="mt-1 text-sm text-gray-500">
             Submitted results will appear here. Returned results
-            remain in the returned count until resubmitted.
+            must be corrected and resubmitted before they appear
+            in this list again.
           </p>
         </div>
       ) : (
@@ -348,8 +370,7 @@ function ResultApprovalPanel() {
             const student = getStudent(result.studentId);
             const session = getSession(result.sessionId);
             const resultKey = getResultKey(result);
-            const average = getAverage(result);
-            const isBusy = busyKey === resultKey;
+            const isSaving = savingKey === resultKey;
 
             return (
               <article
@@ -391,7 +412,7 @@ function ResultApprovalPanel() {
                   </div>
 
                   <div>
-                    <p className="text-gray-500">Subjects with complete marks</p>
+                    <p className="text-gray-500">Subjects</p>
                     <p className="font-medium text-gray-900">
                       {getSubjectCount(result)}
                     </p>
@@ -402,12 +423,13 @@ function ResultApprovalPanel() {
                       Average subject score
                     </p>
                     <p className="font-medium text-gray-900">
-                      {average}
-                      {average !== "—" ? "%" : ""}
+                      {getAverage(result)}
+                      {getAverage(result) !== "—" ? "%" : ""}
                     </p>
                   </div>
                 </div>
 
+                {/* CORRECTION REASON */}
                 <div className="mt-4">
                   <label
                     htmlFor={`feedback-${resultKey}`}
@@ -420,55 +442,37 @@ function ResultApprovalPanel() {
                     id={`feedback-${resultKey}`}
                     rows={2}
                     value={feedback[resultKey] || ""}
-                    onChange={(event) =>
-                      updateFeedback(resultKey, event.target.value)
-                    }
+                    disabled={isSaving}
+                    onChange={(event) => {
+                      setFeedback((current) => ({
+                        ...current,
+                        [resultKey]: event.target.value,
+                      }));
+                      setMessage("");
+                    }}
                     placeholder="Explain what needs to be corrected..."
-                    disabled={isBusy}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-700 disabled:bg-gray-100"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-700 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100"
                   />
                 </div>
 
+                {/* ACTION BUTTONS */}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    disabled={Boolean(busyKey)}
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          "Approve these results? They will be locked against normal editing."
-                        )
-                      ) {
-                        updateResult(resultKey, "approve");
-                      }
-                    }}
-                    className="rounded-lg bg-green-800 px-4 py-2 font-semibold text-white hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={Boolean(savingKey)}
+                    onClick={() => openConfirmation(result, "approve")}
+                    className="rounded-lg bg-green-800 px-4 py-2 font-semibold text-white transition hover:bg-green-900 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isBusy ? "Saving..." : "Approve Result"}
+                    {isSaving ? "Saving..." : "Approve Result"}
                   </button>
 
                   <button
                     type="button"
-                    disabled={Boolean(busyKey)}
-                    onClick={() => {
-                      if (!String(feedback[resultKey] || "").trim()) {
-                        setMessage(
-                          "Enter a reason before returning a result for correction."
-                        );
-                        return;
-                      }
-
-                      if (
-                        window.confirm(
-                          "Return this result to the teacher for correction?"
-                        )
-                      ) {
-                        updateResult(resultKey, "return");
-                      }
-                    }}
-                    className="rounded-lg border border-red-300 px-4 py-2 font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={Boolean(savingKey)}
+                    onClick={() => openConfirmation(result, "return")}
+                    className="rounded-lg border border-red-300 px-4 py-2 font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isBusy ? "Saving..." : "Return for Correction"}
+                    {isSaving ? "Saving..." : "Return for Correction"}
                   </button>
                 </div>
               </article>
@@ -477,11 +481,131 @@ function ResultApprovalPanel() {
         </div>
       )}
 
+      {/* DEVELOPMENT NOTICE */}
       <p className="text-xs leading-5 text-gray-500">
         This browser-based version is for development and testing.
         Approval controls are not protected by server-side user
         roles until the .NET backend is implemented.
       </p>
+
+      {/* CUSTOM CONFIRMATION MODAL */}
+      {confirmAction && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !savingKey) {
+              setConfirmAction(null);
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
+            aria-describedby="confirm-modal-description"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-green-100 bg-white shadow-2xl"
+          >
+            {/* MODAL HEADER */}
+            <div className="bg-green-950 px-6 py-5 text-white">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-400/15 text-xl text-yellow-300">
+                  {confirmAction.type === "approve" ? "✓" : "↻"}
+                </div>
+
+                <div>
+                  <h3
+                    id="confirm-modal-title"
+                    className="text-lg font-bold"
+                  >
+                    {confirmAction.type === "approve"
+                      ? "Approve Results?"
+                      : "Return for Correction?"}
+                  </h3>
+
+                  <p className="mt-1 text-sm text-green-100">
+                    Greenfield School · Results Management
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* MODAL CONTENT */}
+            <div className="space-y-4 p-6">
+              <p
+                id="confirm-modal-description"
+                className="text-sm leading-6 text-gray-700"
+              >
+                {confirmAction.type === "approve"
+                  ? `Are you sure you want to approve ${confirmAction.studentName}'s results? The results will become available on the official report card.`
+                  : `Are you sure you want to return ${confirmAction.studentName}'s results to the teacher for correction?`}
+              </p>
+
+              <div className="grid grid-cols-1 gap-3 rounded-xl bg-gray-50 p-3 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-gray-500">Session</p>
+                  <p className="font-semibold text-gray-800">
+                    {confirmAction.sessionName}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">Term</p>
+                  <p className="font-semibold text-gray-800">
+                    {confirmAction.term}
+                  </p>
+                </div>
+              </div>
+
+              {confirmAction.type === "return" && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-amber-900">
+                    Correction reason
+                  </p>
+
+                  <p className="mt-1 whitespace-pre-wrap break-words text-sm text-amber-800">
+                    {feedback[confirmAction.resultKey]}
+                  </p>
+                </div>
+              )}
+
+              <p className="text-xs leading-5 text-gray-500">
+                {confirmAction.type === "approve"
+                  ? "Please verify the marks before approving. This action changes the result status."
+                  : "The correction reason will be saved so the teacher knows what to fix."}
+              </p>
+            </div>
+
+            {/* MODAL ACTIONS */}
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={Boolean(savingKey)}
+                onClick={() => setConfirmAction(null)}
+                className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={Boolean(savingKey)}
+                onClick={confirmReviewAction}
+                className={`rounded-xl px-5 py-2.5 font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  confirmAction.type === "approve"
+                    ? "bg-green-800 hover:bg-green-900"
+                    : "bg-red-700 hover:bg-red-800"
+                }`}
+              >
+                {savingKey === confirmAction.resultKey
+                  ? "Saving..."
+                  : confirmAction.type === "approve"
+                    ? "Yes, Approve"
+                    : "Yes, Return"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

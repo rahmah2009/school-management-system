@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 
 import PublicLayout from "./components/layout/PublicLayout";
@@ -13,11 +14,12 @@ import Teachers from "./pages/public/Teachers";
 import Login from "./pages/auth/Login";
 
 import Dashboard from "./pages/admin/Dashboard";
-import Students from "./pages/admin/Students"
-import Classes from "./pages/admin/Classes"
+import Students from "./pages/admin/Students";
+import Classes from "./pages/admin/Classes";
 import TeachersAdmin from "./pages/admin/Teachers";
 import Sessions from "./pages/admin/Sessions";
 import Results from "./pages/admin/Results";
+import Messages from "./pages/admin/Messages";
 
 export default function App() {
   return (
@@ -44,6 +46,7 @@ export default function App() {
           <Route path="/admin/classes" element={<Classes />} />
           <Route path="/admin/sessions" element={<Sessions />} />
           <Route path="/admin/results" element={<Results />} />
+          <Route path="/admin/messages" element={<Messages />} />
         </Route>
       </Routes>
     </>

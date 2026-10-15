@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Mail, Time, MapPin } from "../../components/common/Icons";
 import PageHero from "../../components/common/PageHero";
 
+const MESSAGES_KEY = "greenfield_school_messages";
+
 function Contact() {
     const [status, setStatus] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -12,7 +14,7 @@ function Contact() {
         setIsSubmitting(true);
         setStatus("");
 
-        const form = e.target;
+        const form = e.currentTarget;
         const formData = new FormData(form);
 
         try {
@@ -27,25 +29,99 @@ function Contact() {
                 }
             );
 
-            if (response.ok) {
-                form.reset();
-                setStatus("Thank you! Your message has been sent successfully.");
-
-                setTimeout(() => {
-                    setStatus("");
-                }, 5000);
-            } else {
+            if (!response.ok) {
                 setStatus("Something went wrong. Please try again.");
+                return;
             }
+
+            const inquiryTypes = {
+                general_enquiry: "General Enquiry",
+                admissions: "Admissions",
+                academics: "Academics",
+                student_support: "Student Support",
+                other: "Other",
+            };
+
+            const newMessage = {
+                id:
+                    typeof crypto !== "undefined" &&
+                    typeof crypto.randomUUID === "function"
+                        ? crypto.randomUUID()
+                        : `${Date.now()}-${Math.random()
+                              .toString(36)
+                              .slice(2)}`,
+
+                name: [
+                    formData.get("first_name"),
+                    formData.get("last_name"),
+                ]
+                    .filter(Boolean)
+                    .join(" "),
+
+                email: String(formData.get("email") || ""),
+                phone: String(formData.get("phone") || ""),
+                subject:
+                    inquiryTypes[formData.get("inquiry_type")] ||
+                    "New Enquiry",
+                message: String(formData.get("message") || ""),
+                createdAt: new Date().toISOString(),
+                isRead: false,
+            };
+
+            let dashboardSaved = false;
+
+            try {
+                const storedMessages = JSON.parse(
+                    localStorage.getItem(MESSAGES_KEY) || "[]"
+                );
+
+                if (!Array.isArray(storedMessages)) {
+                    throw new Error("Stored messages are not an array.");
+                }
+
+                // Preserve each existing message's read status.
+                const existingMessages = storedMessages.map((message) => ({
+                    ...message,
+                    isRead:
+                        typeof message.isRead === "boolean"
+                            ? message.isRead
+                            : false,
+                }));
+
+                localStorage.setItem(
+                    MESSAGES_KEY,
+                    JSON.stringify([newMessage, ...existingMessages])
+                );
+
+                window.dispatchEvent(
+                    new Event("greenfield-messages-updated")
+                );
+
+                dashboardSaved = true;
+            } catch (storageError) {
+                console.error(
+                    "The message was sent, but its dashboard copy could not be saved:",
+                    storageError
+                );
+            }
+
+            form.reset();
+
+            setStatus(
+                dashboardSaved
+                    ? "Thank you! Your message has been sent successfully."
+                    : "Your message was sent, but we couldn't save its dashboard copy in this browser."
+            );
         } catch (error) {
+            console.error("Could not send contact form:", error);
             setStatus("Unable to send your message. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
     };
+
     return (
         <div className="contact-page">
-
             <PageHero
                 breadcrumb="Contact Us"
                 eyebrow="GET IN TOUCH"
@@ -59,15 +135,25 @@ function Contact() {
                     <div className="space-y-8">
                         <div>
                             <h2 className="allura text-5xl text-green-950">
-                                Get in <span className="italic font-serif">Touch</span>
+                                Get in{" "}
+                                <span className="italic font-serif">
+                                    Touch
+                                </span>
                             </h2>
-                            <div className="mt-2 h-1 w-10 bg-yellow-400"></div>
+
+                            <div className="mt-2 h-1 w-10 bg-yellow-400" />
 
                             <p className="mt-4 max-w-lg text-base leading-relaxed text-gray-600">
-                                Complete the form below or reach out to us directly via email or phone.
-                                We look forward to connecting with you! For urgent inquiries, please call us directly at<span className="font-bold text-green-900">
-                                    <a href="tel:+2347041797484" className="hover:underline">+234 704 179 7484</a>
-                                </span>.
+                                Complete the form below or reach out to us
+                                directly via email or phone. We look forward
+                                to connecting with you! For urgent inquiries,
+                                please call us directly at{" "}
+                                <a
+                                    href="tel:+2347041797484"
+                                    className="font-bold text-green-900 hover:underline"
+                                >
+                                    +234 704 179 7484
+                                </a>.
                             </p>
                         </div>
 
@@ -76,10 +162,13 @@ function Contact() {
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100/60 text-emerald-900">
                                     <Mail size={16} />
                                 </div>
+
                                 <div>
-                                    <h4 className="text-sm font-bold text-emerald-950">General Enquiries</h4>
+                                    <h4 className="text-sm font-bold text-emerald-950">
+                                        General Enquiries
+                                    </h4>
                                     <a
-                                        href="mailto:olajumokekahmah0@gmail.com"
+                                        href="mailto:info@greenfieldschool.com"
                                         className="text-sm text-emerald-800 hover:underline"
                                     >
                                         info@greenfieldschool.com
@@ -91,10 +180,13 @@ function Contact() {
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100/60 text-emerald-900">
                                     <Mail size={16} />
                                 </div>
+
                                 <div>
-                                    <h4 className="text-sm font-bold text-emerald-950">Admissions</h4>
+                                    <h4 className="text-sm font-bold text-emerald-950">
+                                        Admissions
+                                    </h4>
                                     <a
-                                        href="mailto:olajumokekahmah0@gmail.com"
+                                        href="mailto:admissions@greenfieldschool.com"
                                         className="text-sm text-emerald-800 hover:underline"
                                     >
                                         admissions@greenfieldschool.com
@@ -106,9 +198,14 @@ function Contact() {
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100/60 text-emerald-900">
                                     <Time size={16} />
                                 </div>
+
                                 <div>
-                                    <h4 className="text-sm font-bold text-emerald-950">Office Hours</h4>
-                                    <p className="text-sm text-gray-600">Monday – Friday: 08:00am – 05:00pm</p>
+                                    <h4 className="text-sm font-bold text-emerald-950">
+                                        Office Hours
+                                    </h4>
+                                    <p className="text-sm text-gray-600">
+                                        Monday – Friday: 08:00am – 05:00pm
+                                    </p>
                                 </div>
                             </div>
 
@@ -121,14 +218,13 @@ function Contact() {
                                     <h4 className="text-sm font-bold text-emerald-950">
                                         School Address
                                     </h4>
-
                                     <p className="text-sm leading-6 text-gray-600">
-                                        Greenfield School, Ilorin, Kwara State, Nigeria
+                                        Greenfield School, Ilorin, Kwara
+                                        State, Nigeria
                                     </p>
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
                     <form
@@ -146,8 +242,12 @@ function Contact() {
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <label htmlFor="first_name" className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase">
-                                    First Name <span className="text-red-500">*</span>
+                                <label
+                                    htmlFor="first_name"
+                                    className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase"
+                                >
+                                    First Name{" "}
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -160,8 +260,12 @@ function Contact() {
                             </div>
 
                             <div>
-                                <label htmlFor="last_name" className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase">
-                                    Last Name <span className="text-red-500">*</span>
+                                <label
+                                    htmlFor="last_name"
+                                    className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase"
+                                >
+                                    Last Name{" "}
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -175,8 +279,12 @@ function Contact() {
                         </div>
 
                         <div>
-                            <label htmlFor="phone" className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase">
-                                Phone Number <span className="text-red-500">*</span>
+                            <label
+                                htmlFor="phone"
+                                className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase"
+                            >
+                                Phone Number{" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="tel"
@@ -189,8 +297,12 @@ function Contact() {
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase">
-                                Email Address <span className="text-red-500">*</span>
+                            <label
+                                htmlFor="email"
+                                className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase"
+                            >
+                                Email Address{" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="email"
@@ -207,7 +319,8 @@ function Contact() {
                                 htmlFor="inquiry_type"
                                 className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase"
                             >
-                                Inquiry Type <span className="text-red-500">*</span>
+                                Inquiry Type{" "}
+                                <span className="text-red-500">*</span>
                             </label>
 
                             <select
@@ -220,31 +333,27 @@ function Contact() {
                                 <option value="" disabled hidden>
                                     What can we help you with?
                                 </option>
-
                                 <option value="general_enquiry">
                                     General Enquiry
                                 </option>
-
                                 <option value="admissions">
                                     Admissions
                                 </option>
-
-                                <option value="academics">
-                                    Academics
-                                </option>
-
+                                <option value="academics">Academics</option>
                                 <option value="student_support">
                                     Student Support
                                 </option>
-
-                                <option value="other">
-                                    Other
-                                </option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
+
                         <div>
-                            <label htmlFor="message" className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase">
-                                Message <span className="text-red-500">*</span>
+                            <label
+                                htmlFor="message"
+                                className="block text-[11px] font-bold tracking-wider text-emerald-950 uppercase"
+                            >
+                                Message{" "}
+                                <span className="text-red-500">*</span>
                             </label>
                             <textarea
                                 id="message"
@@ -253,14 +362,19 @@ function Contact() {
                                 placeholder="How can we help you?"
                                 className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-emerald-50/20 px-3.5 py-2.5 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-emerald-800 focus:bg-white focus:ring-1 focus:ring-emerald-800"
                                 required
-                            ></textarea>
+                            />
                         </div>
 
                         {status && (
-                            <div className="rounded-lg bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
+                            <div
+                                role="status"
+                                aria-live="polite"
+                                className="rounded-lg bg-green-50 px-4 py-3 text-sm font-medium text-green-800"
+                            >
                                 {status}
                             </div>
                         )}
+
                         <button
                             type="submit"
                             disabled={isSubmitting}
@@ -273,28 +387,26 @@ function Contact() {
                     <section className="md:col-span-2">
                         <div className="mx-auto max-w-6xl">
                             <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50/30 shadow-sm">
-
                                 <div className="flex min-h-[280px] items-center justify-center bg-emerald-950">
                                     <div className="text-center text-white">
-                                        <MapPin size={32} className="mx-auto mb-4" />
-
+                                        <MapPin
+                                            size={32}
+                                            className="mx-auto mb-4"
+                                        />
                                         <h2 className="text-2xl font-bold">
                                             Find Our School
                                         </h2>
-
                                         <p className="mt-2 text-sm text-emerald-100">
-                                            Greenfield School, Ilorin, Kwara State, Nigeria
+                                            Greenfield School, Ilorin, Kwara
+                                            State, Nigeria
                                         </p>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </section>
                 </div>
-
             </aside>
-
         </div>
     );
 }
