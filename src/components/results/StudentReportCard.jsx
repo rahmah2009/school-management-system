@@ -1,9 +1,20 @@
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
 
 const RESULTS_KEY = "greenfield_school_results";
 const STUDENTS_KEY = "greenfield_school_students";
 const SESSIONS_KEY = "greenfield_school_sessions";
 const REMARKS_KEY = "greenfield_school_remarks";
+const SETTINGS_KEY = "greenfield_school_settings";
+
+const DEFAULT_GRADING_SCALE = [
+  { grade: "A", minScore: 70, remark: "Excellent" },
+  { grade: "B", minScore: 60, remark: "Very Good" },
+  { grade: "C", minScore: 50, remark: "Good" },
+  { grade: "D", minScore: 45, remark: "Fair" },
+  { grade: "E", minScore: 40, remark: "Pass" },
+  { grade: "F", minScore: 0, remark: "Fail" },
+];
 
 function readArray(key) {
   try {
@@ -17,7 +28,9 @@ function readArray(key) {
 
 function readRemarks() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(REMARKS_KEY) || "{}");
+    const parsed = JSON.parse(
+      localStorage.getItem(REMARKS_KEY) || "{}"
+    );
 
     return parsed &&
       typeof parsed === "object" &&
@@ -30,6 +43,76 @@ function readRemarks() {
   }
 }
 
+function readGradingScale() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+
+    if (!raw) {
+      return DEFAULT_GRADING_SCALE.map((item) => ({ ...item }));
+    }
+
+    const settings = JSON.parse(raw);
+    const scale = settings?.gradingScale;
+
+    if (
+      !Array.isArray(scale) ||
+      scale.length !== DEFAULT_GRADING_SCALE.length
+    ) {
+      return DEFAULT_GRADING_SCALE.map((item) => ({ ...item }));
+    }
+
+    const valid = scale.every((item, index) => {
+      const score = Number(item?.minScore);
+
+      return (
+        item?.grade === DEFAULT_GRADING_SCALE[index].grade &&
+        Number.isInteger(score) &&
+        score >= 0 &&
+        score <= 100 &&
+        typeof item.remark === "string" &&
+        item.remark.trim() !== "" &&
+        (
+          index === 0 ||
+          score < Number(scale[index - 1].minScore)
+        )
+      );
+    });
+
+    if (!valid || Number(scale[5].minScore) !== 0) {
+      return DEFAULT_GRADING_SCALE.map((item) => ({ ...item }));
+    }
+
+    return scale.map((item) => ({
+      grade: item.grade,
+      minScore: Number(item.minScore),
+      remark: item.remark.trim(),
+    }));
+  } catch (error) {
+    console.error("Could not read grading scale:", error);
+
+    return DEFAULT_GRADING_SCALE.map((item) => ({ ...item }));
+  }
+}
+
+// Each grading function is declared only once.
+function getGrade(total, gradingScale) {
+  const score = Number(total);
+
+  const matchedGrade = gradingScale.find(
+    (item) => score >= Number(item.minScore)
+  );
+
+  return matchedGrade?.grade || "F";
+}
+
+function getRemark(average, gradingScale) {
+  const matchedGrade = gradingScale.find(
+    (item) => average >= item.minScore
+  );
+
+  return matchedGrade?.remark ?? "Fail";
+}
+
 function getSubjectScores(result) {
   return Object.entries(result?.marks || {})
     .filter(([, marks]) => {
@@ -37,8 +120,10 @@ function getSubjectScores(result) {
         !marks ||
         marks.ca === "" ||
         marks.ca === undefined ||
+        marks.ca === null ||
         marks.exam === "" ||
-        marks.exam === undefined
+        marks.exam === undefined ||
+        marks.exam === null
       ) {
         return false;
       }
@@ -63,24 +148,6 @@ function getSubjectScores(result) {
     }));
 }
 
-function getGrade(total) {
-  if (total >= 70) return "A";
-  if (total >= 60) return "B";
-  if (total >= 50) return "C";
-  if (total >= 45) return "D";
-  if (total >= 40) return "E";
-  return "F";
-}
-
-function getRemark(average) {
-  if (average >= 70) return "Excellent performance";
-  if (average >= 60) return "Very good performance";
-  if (average >= 50) return "Good performance";
-  if (average >= 45) return "Fair performance";
-  if (average >= 40) return "Needs more improvement";
-  return "Needs additional academic support";
-}
-
 function ordinal(number) {
   if (number === null || number === undefined) return "—";
 
@@ -103,7 +170,7 @@ function ordinal(number) {
 }
 
 function getStatusLabel(status) {
-  switch (status) {
+  switch (String(status || "").trim().toLowerCase()) {
     case "draft":
       return "Draft";
     case "submitted":
@@ -122,6 +189,8 @@ function StudentReportCard() {
     readArray(STUDENTS_KEY)
   );
 
+  const [gradingScale, setGradingScale] = useState(readGradingScale);
+
   const [sessions, setSessions] = useState(() =>
     readArray(SESSIONS_KEY)
   );
@@ -130,9 +199,10 @@ function StudentReportCard() {
     readArray(RESULTS_KEY)
   );
 
-  const [remarks, setRemarks] = useState(() => readRemarks());
+  const [remarks, setRemarks] = useState(readRemarks);
 
   const [studentId, setStudentId] = useState("");
+
   const [sessionId, setSessionId] = useState(() => {
     const activeSession = readArray(SESSIONS_KEY).find(
       (session) => session.isActive
@@ -144,30 +214,45 @@ function StudentReportCard() {
   const [term, setTerm] = useState("");
   const [remarkMessage, setRemarkMessage] = useState("");
 
+  const refreshData = useCallback(() => {
+    setStudents(readArray(STUDENTS_KEY));
+    setSessions(readArray(SESSIONS_KEY));
+    setResults(readArray(RESULTS_KEY));
+    setRemarks(readRemarks());
+    setGradingScale(readGradingScale());
+  }, []);
+
   useEffect(() => {
-    function refreshData() {
-      setStudents(readArray(STUDENTS_KEY));
-      setSessions(readArray(SESSIONS_KEY));
-      setResults(readArray(RESULTS_KEY));
-      setRemarks(readRemarks());
-    }
+    refreshData();
 
     window.addEventListener("focus", refreshData);
     window.addEventListener("storage", refreshData);
+
     window.addEventListener(
       "greenfield-results-updated",
+      refreshData
+    );
+
+    window.addEventListener(
+      "greenfield-settings-updated",
       refreshData
     );
 
     return () => {
       window.removeEventListener("focus", refreshData);
       window.removeEventListener("storage", refreshData);
+
       window.removeEventListener(
         "greenfield-results-updated",
         refreshData
       );
+
+      window.removeEventListener(
+        "greenfield-settings-updated",
+        refreshData
+      );
     };
-  }, []);
+  }, [refreshData]);
 
   const student = students.find(
     (item) => String(item.id) === studentId
@@ -185,7 +270,8 @@ function StudentReportCard() {
   );
 
   // Only explicitly approved results may appear on the official report.
-  const isApproved = result?.status === "approved";
+  const isApproved =
+    String(result?.status || "").trim().toLowerCase() === "approved";
 
   const remarkKey = JSON.stringify([
     studentId,
@@ -197,7 +283,7 @@ function StudentReportCard() {
     teacherRemark: "",
   };
 
-  // Unapproved results must never contribute marks to this report.
+  // Unapproved results never contribute marks to the report.
   const scores = getSubjectScores(
     isApproved ? result : null
   );
@@ -211,53 +297,56 @@ function StudentReportCard() {
     ? totalMarks / scores.length
     : 0;
 
-  // Class positions are calculated using approved results only.
+  // Class positions use approved results from the same class/session/term.
   const classmates = student
     ? students
-        .filter(
+      .filter(
+        (item) =>
+          item.className === student.className &&
+          (item.department || "") ===
+          (student.department || "")
+      )
+      .map((classmate) => {
+        const classmateResult = results.find(
           (item) =>
-            item.className === student.className &&
-            (item.department || "") ===
-              (student.department || "")
-        )
-        .map((classmate) => {
-          const classmateResult = results.find(
-            (item) =>
-              String(item.studentId) ===
-                String(classmate.id) &&
-              String(item.sessionId) === sessionId &&
-              item.term === term
-          );
+            String(item.studentId) === String(classmate.id) &&
+            String(item.sessionId) === sessionId &&
+            item.term === term
+        );
 
-          if (classmateResult?.status !== "approved") {
-            return {
-              id: classmate.id,
-              average: null,
-            };
-          }
-
-          const classmateScores =
-            getSubjectScores(classmateResult);
-
-          const classmateAverage = classmateScores.length
-            ? classmateScores.reduce(
-                (sum, item) => sum + item.total,
-                0
-              ) / classmateScores.length
-            : null;
-
+        if (
+          String(classmateResult?.status || "")
+            .trim()
+            .toLowerCase() !== "approved"
+        ) {
           return {
             id: classmate.id,
-            average: classmateAverage,
+            average: null,
           };
-        })
-        .filter((item) => item.average !== null)
+        }
+
+        const classmateScores =
+          getSubjectScores(classmateResult);
+
+        const classmateAverage = classmateScores.length
+          ? classmateScores.reduce(
+            (sum, item) => sum + item.total,
+            0
+          ) / classmateScores.length
+          : null;
+
+        return {
+          id: classmate.id,
+          average: classmateAverage,
+        };
+      })
+      .filter((item) => item.average !== null)
     : [];
 
   const position = scores.length
     ? classmates.filter(
-        (item) => item.average > average
-      ).length + 1
+      (item) => item.average > average
+    ).length + 1
     : null;
 
   function saveTeacherRemark(value) {
@@ -300,7 +389,6 @@ function StudentReportCard() {
 
   function printReport() {
     if (!isApproved) return;
-
     window.print();
   }
 
@@ -335,20 +423,14 @@ function StudentReportCard() {
             id="report-student"
             value={studentId}
             onChange={(event) =>
-              updateSelection(
-                setStudentId,
-                event.target.value
-              )
+              updateSelection(setStudentId, event.target.value)
             }
             className="w-full rounded-xl border border-gray-300 p-3"
           >
             <option value="">Select student</option>
 
             {students.map((item) => (
-              <option
-                key={item.id}
-                value={String(item.id)}
-              >
+              <option key={item.id} value={String(item.id)}>
                 {item.name} ({item.id})
               </option>
             ))}
@@ -367,20 +449,14 @@ function StudentReportCard() {
             id="report-session"
             value={sessionId}
             onChange={(event) =>
-              updateSelection(
-                setSessionId,
-                event.target.value
-              )
+              updateSelection(setSessionId, event.target.value)
             }
             className="w-full rounded-xl border border-gray-300 p-3"
           >
             <option value="">Select session</option>
 
             {sessions.map((item) => (
-              <option
-                key={item.id}
-                value={String(item.id)}
-              >
+              <option key={item.id} value={String(item.id)}>
                 {item.name}
                 {item.isActive ? " (Active)" : ""}
               </option>
@@ -441,16 +517,16 @@ function StudentReportCard() {
             </h3>
 
             <p className="mt-2 text-sm text-amber-800">
-              This result has not been approved. Marks,
-              totals, averages and class positions are hidden
-              until an administrator approves the result.
+              This result has not been approved. Marks, totals,
+              averages and class positions are hidden until an
+              administrator approves the result.
             </p>
 
             <p className="mt-3 text-sm font-semibold text-amber-900">
               Current status: {getStatusLabel(result.status)}
             </p>
 
-            {result.status === "returned" &&
+            {String(result.status || "").toLowerCase() === "returned" &&
               result.reviewNote && (
                 <p className="mt-2 text-sm text-amber-800">
                   <strong>Review note:</strong>{" "}
@@ -459,7 +535,7 @@ function StudentReportCard() {
               )}
           </div>
 
-          {/* TEACHER REMARK CAN BE PREPARED BEFORE APPROVAL */}
+          {/* TEACHER REMARK BEFORE APPROVAL */}
           <div className="no-print space-y-3 rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
             <div>
               <h3 className="font-bold text-green-950">
@@ -467,9 +543,9 @@ function StudentReportCard() {
               </h3>
 
               <p className="mt-1 text-sm text-gray-600">
-                You can prepare the teacher's remark while
-                the result awaits approval. The official
-                report card remains unavailable until approval.
+                You can prepare the teacher's remark while the
+                result awaits approval. The official report card
+                remains unavailable until approval.
               </p>
             </div>
 
@@ -535,8 +611,7 @@ function StudentReportCard() {
               </p>
 
               <p>
-                <strong>Class:</strong>{" "}
-                {student.className || "—"}
+                <strong>Class:</strong> {student.className || "—"}
               </p>
 
               <p>
@@ -566,7 +641,8 @@ function StudentReportCard() {
                       <td>{item.exam}</td>
                       <td>{item.total}</td>
                       <td className="font-bold">
-                        {getGrade(item.total)}
+                        {/* {getGrade(item.total, gradingScale)} */}
+                        {getGrade(item.total, gradingScale)} ({item.total}/100)
                       </td>
                     </tr>
                   ))}
@@ -626,7 +702,7 @@ function StudentReportCard() {
 
                 <p className="mt-1">
                   {scores.length
-                    ? getRemark(average)
+                    ? getRemark(average, gradingScale)
                     : "No complete subject marks available."}
                 </p>
               </div>
@@ -675,18 +751,12 @@ function StudentReportCard() {
               {/* SIGNATURES */}
               <div className="report-signatures">
                 <div className="signature-block">
-                  <div
-                    className="signature-line"
-                    aria-hidden="true"
-                  />
+                  <div className="signature-line" aria-hidden="true" />
                   <p>Class Teacher's Signature</p>
                 </div>
 
                 <div className="signature-block">
-                  <div
-                    className="signature-line"
-                    aria-hidden="true"
-                  />
+                  <div className="signature-line" aria-hidden="true" />
                   <p>Principal's Signature</p>
                 </div>
               </div>

@@ -20,6 +20,7 @@ import TeachersAdmin from "./pages/admin/Teachers";
 import Sessions from "./pages/admin/Sessions";
 import Results from "./pages/admin/Results";
 import Messages from "./pages/admin/Messages";
+import Settings from "./pages/admin/Settings";
 
 export default function App() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/admin/sessions" element={<Sessions />} />
           <Route path="/admin/results" element={<Results />} />
           <Route path="/admin/messages" element={<Messages />} />
+          <Route path="/admin/settings" element={<Settings/>} />
         </Route>
       </Routes>
     </>
