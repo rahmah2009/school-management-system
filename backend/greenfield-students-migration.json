@@ -1,0 +1,51 @@
+[
+  {
+    "id": "GfSP-001",
+    "name": "Issa Fatimoh Zarah",
+    "className": "JSS 2",
+    "department": "",
+    "createdAt": "2026-10-13"
+  },
+  {
+    "id": "GfSP-002",
+    "name": "Abdulsalam Hannan Kamaldin",
+    "className": "SS 3",
+    "department": "Science",
+    "createdAt": "2026-10-13"
+  },
+  {
+    "id": "GfSP-003",
+    "name": "Abdulrofiu Ajoke Aishah",
+    "className": "SS 1",
+    "department": "Commercial",
+    "createdAt": "2026-10-14"
+  },
+  {
+    "id": "GfSP-004",
+    "name": "Abdulganiy Ajike Aishah",
+    "className": "JSS 3",
+    "department": "",
+    "createdAt": "2026-10-14"
+  },
+  {
+    "id": "GfSP-005",
+    "name": "Yusuf Mujeedah Olamide",
+    "className": "SS 3",
+    "department": "Science",
+    "createdAt": "2026-10-15"
+  },
+  {
+    "id": "GfSP-006",
+    "name": "Lukman Aishah Ajoke",
+    "className": "JSS 1",
+    "department": "",
+    "createdAt": "2026-10-15"
+  },
+  {
+    "id": "GfSP-007",
+    "name": "AbdulQuadri Aishah Onimago",
+    "className": "SS 2",
+    "department": "Arts",
+    "createdAt": "2026-10-15"
+  }
+]

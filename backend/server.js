@@ -1,14 +1,23 @@
-const studentRoutes = require("./routes/students");
 
 require("dotenv").config();
 
 const express = require("express");
+const cors = require("cors");
 const pool = require("./config/database");
+const studentRoutes = require("./routes/students");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
+// Allow the React frontend to communicate with the backend.
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+    })
+);
 
 app.use(express.json());
+
 app.use("/api/students", studentRoutes);
 
 // Welcome route

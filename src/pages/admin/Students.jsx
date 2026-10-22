@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -8,30 +9,18 @@ import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
 
-const generateStudentId = (students) => {
-    const numbers = students
-        .map((student) => {
-            const match = student.id.match(/(\d+)$/);
-            return match ? Number(match[1]) : NaN;
-        })
-        .filter((number) => !Number.isNaN(number));
-
-    const nextNumber =
-        numbers.length > 0
-            ? Math.max(...numbers) + 1
-            : 1;
-
-    return `GfSP-${String(nextNumber).padStart(3, "0")}`;
-};
+import {
+    getStudents,
+    createStudent,
+    updateStudent,
+    deleteStudent,
+} from "../../services/studentApi";
 
 function Students() {
-    const [students, setStudents] = useState(() => {
-        const savedStudents = localStorage.getItem(
-            "greenfield_school_students"
-        );
-
-        return savedStudents ? JSON.parse(savedStudents) : [];
-    });
+    const [students, setStudents] = useState([]);
+    const [isLoadingStudents, setIsLoadingStudents] = useState(true);
+    const [apiError, setApiError] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
 
     const [search, setSearch] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,15 +41,42 @@ function Students() {
 
     const isSeniorSecondary = studentClass.startsWith("SS");
 
+    // Load students from PostgreSQL when the page opens.
     useEffect(() => {
-        localStorage.setItem(
-            "greenfield_school_students",
-            JSON.stringify(students)
-        );
-    }, [students]);
+        let isMounted = true;
+
+        async function loadStudents() {
+            try {
+                setApiError("");
+
+                const savedStudents = await getStudents();
+
+                if (isMounted) {
+                    setStudents(savedStudents);
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setApiError(
+                        err.message ||
+                            "Unable to load students from the server."
+                    );
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoadingStudents(false);
+                }
+            }
+        }
+
+        loadStudents();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const filteredStudents = students.filter((student) => {
-        const matchesSearch = `${student.name} ${student.className}`
+        const matchesSearch = `${student.name} ${student.className || ""}`
             .toLowerCase()
             .includes(search.toLowerCase());
 
@@ -70,19 +86,22 @@ function Students() {
         return matchesSearch && matchesClass;
     });
 
-    const validateStudent = (name, studentClass, department) => {
-        if (!name || !studentClass) {
-            return "Please enter the student's name and select a class.";
+    const validateStudent = (name, selectedClass, selectedDepartment) => {
+        if (!firstName.trim() || !lastName.trim() || !selectedClass) {
+            return "Please enter the student's first and last names and select a class.";
         }
 
-        if (studentClass.startsWith("SS") && !department) {
+        if (
+            selectedClass.startsWith("SS") &&
+            !selectedDepartment
+        ) {
             return "Please select a department for SS students.";
         }
 
-        const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)+$/;
+        const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
         if (!namePattern.test(name)) {
-            return "Please enter a valid full name using letters only.";
+            return "Please enter a valid name using letters and spaces only.";
         }
 
         if (name.length < 3) {
@@ -92,7 +111,22 @@ function Students() {
         return "";
     };
 
-    const handleAddStudent = (e) => {
+    const resetForm = () => {
+        setFirstName("");
+        setMiddleName("");
+        setLastName("");
+        setStudentClass("");
+        setDepartment("");
+        setError("");
+        setEditingStudent(null);
+    };
+
+    const closeForm = () => {
+        setIsModalOpen(false);
+        resetForm();
+    };
+
+    const handleAddStudent = async (e) => {
         e.preventDefault();
 
         const name = `${firstName} ${middleName} ${lastName}`
@@ -107,38 +141,39 @@ function Students() {
 
         if (validationError) {
             setError(validationError);
-
-            setTimeout(() => {
-                setError("");
-            }, 2000);
-
             return;
         }
 
-        const newStudent = {
-            id: generateStudentId(students),
-            name,
-            className: studentClass,
-            department: isSeniorSecondary ? department : "",
-            createdAt: new Date().toISOString().split("T")[0],
-        };
+        try {
+            setIsSaving(true);
+            setError("");
+            setApiError("");
 
-        setStudents((currentStudents) => [
-            ...currentStudents,
-            newStudent,
-        ]);
+            const newStudent = await createStudent({
+                firstName: firstName.trim(),
+                middleName: middleName.trim(),
+                lastName: lastName.trim(),
+                className: studentClass,
+                department: isSeniorSecondary ? department : "",
+            });
 
-        setFirstName("");
-        setMiddleName("");
-        setLastName("");
-        setStudentClass("");
-        setDepartment("");
-        setError("");
-        setIsModalOpen(false);
+            setStudents((currentStudents) => [
+                ...currentStudents,
+                newStudent,
+            ]);
+
+            closeForm();
+        } catch (err) {
+            setError(
+                err.message || "Unable to register this student."
+            );
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleEditStudent = (student) => {
-        const nameParts = student.name.split(" ");
+        const nameParts = student.name.trim().split(/\s+/);
 
         setFirstName(nameParts[0] || "");
 
@@ -155,14 +190,20 @@ function Students() {
         );
 
         setEditingStudent(student);
-        setStudentClass(student.className);
+        setStudentClass(student.className || "");
         setDepartment(student.department || "");
         setError("");
+        setApiError("");
         setIsModalOpen(true);
     };
 
-    const handleUpdateStudent = (e) => {
+    const handleUpdateStudent = async (e) => {
         e.preventDefault();
+
+        if (!editingStudent?.dbId) {
+            setError("The database ID is missing. Reload the student list and try again.");
+            return;
+        }
 
         const name = `${firstName} ${middleName} ${lastName}`
             .trim()
@@ -176,58 +217,114 @@ function Students() {
 
         if (validationError) {
             setError(validationError);
-
-            setTimeout(() => {
-                setError("");
-            }, 2000);
-
             return;
         }
 
-        setStudents((currentStudents) =>
-            currentStudents.map((student) =>
-                student.id === editingStudent.id
-                    ? {
-                        ...student,
-                        name,
-                        className: studentClass,
-                        department: studentClass.startsWith("SS")
-                            ? department
-                            : "",
+        try {
+            setIsSaving(true);
+            setError("");
+            setApiError("");
+
+            const updatedStudent = await updateStudent(
+                editingStudent.dbId,
+                {
+                    firstName: firstName.trim(),
+                    middleName: middleName.trim(),
+                    lastName: lastName.trim(),
+                    className: studentClass,
+                    department: studentClass.startsWith("SS")
+                        ? department
+                        : "",
+                }
+            );
+
+            setStudents((currentStudents) =>
+                currentStudents.map((student) =>
+                    student.dbId === updatedStudent.dbId
+                        ? updatedStudent
+                        : student
+                )
+            );
+
+            closeForm();
+        } catch (err) {
+            setError(
+                err.message || "Unable to update this student."
+            );
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDeleteStudent = async (student) => {
+        if (!student?.dbId) {
+            setApiError(
+                "The database ID is missing. Reload the student list and try again."
+            );
+            return;
+        }
+
+        try {
+            setApiError("");
+
+            await deleteStudent(student.dbId);
+
+            setStudents((currentStudents) =>
+                currentStudents.filter(
+                    (item) => item.dbId !== student.dbId
+                )
+            );
+
+            setDeletingStudent(null);
+        } catch (err) {
+            setApiError(
+                err.message || "Unable to delete this student."
+            );
+        }
+    };
+
+    const handleDeleteAllStudents = async () => {
+        try {
+            setIsSaving(true);
+            setApiError("");
+
+            // Delete each student from the database.
+            await Promise.all(
+                students.map((student) => {
+                    if (!student.dbId) {
+                        throw new Error(
+                            "A student is missing its database ID. Reload the list and try again."
+                        );
                     }
-                    : student
-            )
-        );
 
-        setFirstName("");
-        setMiddleName("");
-        setLastName("");
-        setStudentClass("");
-        setDepartment("");
-        setEditingStudent(null);
-        setError("");
-        setIsModalOpen(false);
-    };
+                    return deleteStudent(student.dbId);
+                })
+            );
 
-    const handleDeleteStudent = (studentId) => {
-        setStudents((currentStudents) =>
-            currentStudents.filter(
-                (student) => student.id !== studentId
-            )
-        );
-    };
+            setStudents([]);
+            setIsDeleteAllOpen(false);
+        } catch (err) {
+            setApiError(
+                err.message ||
+                    "Unable to delete all students. Please refresh and check the records."
+            );
 
-    const handleDeleteAllStudents = () => {
-        setStudents([]);
-        setIsDeleteAllOpen(false);
+            // Refresh from the database in case some deletions succeeded.
+            try {
+                const savedStudents = await getStudents();
+                setStudents(savedStudents);
+            } catch {
+                // Keep the existing list if refreshing also fails.
+            }
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
         <div>
-
             {/* PAGE HEADER */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-
                 <div>
                     <h1 className="text-3xl font-bold text-green-950">
                         Students
@@ -240,14 +337,10 @@ function Students() {
 
                 <div className="flex flex-wrap gap-3">
                     <Button
+                        type="button"
                         onClick={() => {
-                            setEditingStudent(null);
-                            setFirstName("");
-                            setMiddleName("");
-                            setLastName("");
-                            setStudentClass("");
-                            setDepartment("");
-                            setError("");
+                            resetForm();
+                            setApiError("");
                             setIsModalOpen(true);
                         }}
                     >
@@ -257,18 +350,30 @@ function Students() {
                     <Button
                         type="button"
                         variant="danger"
-                        disabled={students.length === 0}
+                        disabled={
+                            students.length === 0 ||
+                            isLoadingStudents ||
+                            isSaving
+                        }
                         onClick={() => setIsDeleteAllOpen(true)}
                     >
                         Delete All
                     </Button>
                 </div>
-
             </div>
+
+            {/* API ERROR */}
+            {apiError && (
+                <div
+                    role="alert"
+                    className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
+                >
+                    {apiError}
+                </div>
+            )}
 
             {/* STUDENT SUMMARY */}
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-
                 <Card
                     title="Total Students"
                     description="Number of students currently registered."
@@ -285,7 +390,7 @@ function Students() {
                     <p className="mt-4 text-3xl font-bold text-green-950">
                         {
                             students.filter((student) =>
-                                student.className.startsWith("JSS")
+                                (student.className || "").startsWith("JSS")
                             ).length
                         }
                     </p>
@@ -298,19 +403,16 @@ function Students() {
                     <p className="mt-4 text-3xl font-bold text-green-950">
                         {
                             students.filter((student) =>
-                                student.className.startsWith("SS")
+                                (student.className || "").startsWith("SS")
                             ).length
                         }
                     </p>
                 </Card>
-
             </div>
 
-            {/* SEARCH */}
+            {/* SEARCH AND STUDENT LIST */}
             <section className="mt-10 rounded-2xl border border-green-100 bg-white p-6 shadow-md">
-
                 <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-
                     <div>
                         <h2 className="text-xl font-bold text-green-950">
                             Student Records
@@ -329,21 +431,23 @@ function Students() {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-
                 </div>
 
-                {/* STUDENT LIST */}
                 <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-
-                    {filteredStudents.length > 0 ? (
+                    {isLoadingStudents ? (
+                        <div className="col-span-full rounded-xl bg-green-50 p-8 text-center">
+                            <p className="font-semibold text-green-950">
+                                Loading students...
+                            </p>
+                        </div>
+                    ) : filteredStudents.length > 0 ? (
                         filteredStudents.map((student) => (
                             <Card
-                                key={student.id}
+                                key={student.dbId}
                                 title={student.name}
-                                description={`Class: ${student.className}`}
+                                description={`Class: ${student.className || "Not assigned"}`}
                             >
                                 <div className="mt-4 border-t border-green-100 pt-4">
-
                                     <p className="text-sm text-gray-500">
                                         Student ID
                                     </p>
@@ -381,7 +485,6 @@ function Students() {
                                             Delete
                                         </Button>
                                     </div>
-
                                 </div>
                             </Card>
                         ))
@@ -396,22 +499,15 @@ function Students() {
                             </p>
                         </div>
                     )}
-
                 </div>
-
             </section>
 
             {/* ADD / EDIT STUDENT MODAL */}
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => {
-                    setIsModalOpen(false);
-                    setEditingStudent(null);
-                    setError("");
-                }}
+                onClose={closeForm}
                 title={editingStudent ? "Edit Student" : "Add Student"}
             >
-
                 <form
                     onSubmit={
                         editingStudent
@@ -420,15 +516,12 @@ function Students() {
                     }
                     className="space-y-5"
                 >
-
                     <Input
                         label="Student First Name"
                         type="text"
                         placeholder="Enter student first name"
                         value={firstName}
-                        onChange={(e) =>
-                            setFirstName(e.target.value)
-                        }
+                        onChange={(e) => setFirstName(e.target.value)}
                     />
 
                     <Input
@@ -436,9 +529,7 @@ function Students() {
                         type="text"
                         placeholder="Enter student middle name"
                         value={middleName}
-                        onChange={(e) =>
-                            setMiddleName(e.target.value)
-                        }
+                        onChange={(e) => setMiddleName(e.target.value)}
                     />
 
                     <Input
@@ -446,9 +537,7 @@ function Students() {
                         type="text"
                         placeholder="Enter student last name"
                         value={lastName}
-                        onChange={(e) =>
-                            setLastName(e.target.value)
-                        }
+                        onChange={(e) => setLastName(e.target.value)}
                     />
 
                     {/* CLASS */}
@@ -459,14 +548,11 @@ function Students() {
 
                         <select
                             value={studentClass}
-                            onChange={(e) =>
-                                setStudentClass(e.target.value)
-                            }
+                            onChange={(e) => setStudentClass(e.target.value)}
+                            required
                             className="w-full rounded-xl border border-green-100 bg-white px-4 py-3 outline-none transition focus:border-green-950 focus:ring-2 focus:ring-green-950/10"
                         >
-                            <option value="">
-                                Select a class
-                            </option>
+                            <option value="">Select a class</option>
 
                             {classesData.map((schoolClass) => (
                                 <option
@@ -488,62 +574,44 @@ function Students() {
 
                             <select
                                 value={department}
-                                onChange={(e) =>
-                                    setDepartment(e.target.value)
-                                }
+                                onChange={(e) => setDepartment(e.target.value)}
+                                required
                                 className="w-full rounded-xl border border-green-100 bg-white px-4 py-3 outline-none focus:border-green-950 focus:ring-2 focus:ring-green-950/10"
                             >
-                                <option value="">
-                                    Select department
-                                </option>
-
-                                <option value="Science">
-                                    Science
-                                </option>
-
-                                <option value="Arts">
-                                    Arts
-                                </option>
-
-                                <option value="Commercial">
-                                    Commercial
-                                </option>
+                                <option value="">Select department</option>
+                                <option value="Science">Science</option>
+                                <option value="Arts">Arts</option>
+                                <option value="Commercial">Commercial</option>
                             </select>
                         </div>
                     )}
 
                     {error && (
-                        <p className="rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-600">
+                        <p
+                            role="alert"
+                            className="rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-600"
+                        >
                             {error}
                         </p>
                     )}
 
                     <div className="flex justify-end gap-3">
-
                         <Button
                             type="button"
-                            onClick={() => {
-                                setIsModalOpen(false);
-                                setEditingStudent(null);
-                                setFirstName("");
-                                setMiddleName("");
-                                setLastName("");
-                                setStudentClass("");
-                                setDepartment("");
-                                setError("");
-                            }}
+                            disabled={isSaving}
+                            onClick={closeForm}
                         >
                             Cancel
                         </Button>
 
-                        <Button type="submit">
-                            {editingStudent
-                                ? "Save Changes"
-                                : "Add Student"}
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving
+                                ? "Saving..."
+                                : editingStudent
+                                  ? "Save Changes"
+                                  : "Add Student"}
                         </Button>
-
                     </div>
-
                 </form>
             </Modal>
 
@@ -554,7 +622,6 @@ function Students() {
                 title="Delete Student"
             >
                 <div className="space-y-5">
-
                     <p className="text-gray-600">
                         Are you sure you want to delete{" "}
                         <span className="font-semibold text-green-950">
@@ -564,12 +631,9 @@ function Students() {
                     </p>
 
                     <div className="flex justify-end gap-3">
-
                         <Button
                             type="button"
-                            onClick={() =>
-                                setDeletingStudent(null)
-                            }
+                            onClick={() => setDeletingStudent(null)}
                         >
                             Cancel
                         </Button>
@@ -577,18 +641,13 @@ function Students() {
                         <Button
                             type="button"
                             variant="danger"
-                            onClick={() => {
-                                handleDeleteStudent(
-                                    deletingStudent.id
-                                );
-                                setDeletingStudent(null);
-                            }}
+                            onClick={() =>
+                                handleDeleteStudent(deletingStudent)
+                            }
                         >
                             Delete
                         </Button>
-
                     </div>
-
                 </div>
             </Modal>
 
@@ -599,7 +658,6 @@ function Students() {
                 title="Delete All Students"
             >
                 <div className="space-y-5">
-
                     <p className="text-gray-600">
                         Are you sure you want to delete{" "}
                         <span className="font-semibold text-red-600">
@@ -609,17 +667,15 @@ function Students() {
                     </p>
 
                     <p className="text-sm text-gray-500">
-                        This will permanently remove all student records
-                        from this browser.
+                        This permanently deletes these student records from
+                        the school database.
                     </p>
 
                     <div className="flex justify-end gap-3">
-
                         <Button
                             type="button"
-                            onClick={() =>
-                                setIsDeleteAllOpen(false)
-                            }
+                            disabled={isSaving}
+                            onClick={() => setIsDeleteAllOpen(false)}
                         >
                             Cancel
                         </Button>
@@ -627,16 +683,14 @@ function Students() {
                         <Button
                             type="button"
                             variant="danger"
+                            disabled={isSaving}
                             onClick={handleDeleteAllStudents}
                         >
-                            Delete All
+                            {isSaving ? "Deleting..." : "Delete All"}
                         </Button>
-
                     </div>
-
                 </div>
             </Modal>
-
         </div>
     );
 }
