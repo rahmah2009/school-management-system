@@ -1,9 +1,11 @@
+
 function Button({
     children,
     type = "button",
     onClick,
     className = "",
     variant = "primary",
+    disabled = false,
 }) {
     const variants = {
         primary: "bg-green-950 hover:bg-green-800",
@@ -14,6 +16,7 @@ function Button({
         <button
             type={type}
             onClick={onClick}
+            disabled={disabled}
             className={`rounded-full px-6 py-3 font-bold text-white transition ${variants[variant]} ${className}`}
         >
             {children}
