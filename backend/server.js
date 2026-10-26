@@ -12,9 +12,12 @@ const PORT = process.env.PORT || 5000;
 
 // Allow the React frontend to communicate with the backend.
 app.use(
-    cors({
-        origin: "http://localhost:5173",
-    })
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://school-management-system-phi-lovat.vercel.app",
+    ],
+  })
 );
 
 app.use(express.json());
