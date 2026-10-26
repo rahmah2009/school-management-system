@@ -12,12 +12,12 @@ const PORT = process.env.PORT || 5000;
 
 // Allow the React frontend to communicate with the backend.
 app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://school-management-system-phi-lovat.vercel.app",
-    ],
-  })
+    cors({
+        origin: [
+            "http://localhost:5173",
+            "https://school-management-system-phi-lovat.vercel.app",
+        ],
+    })
 );
 
 app.use(express.json());
@@ -46,7 +46,8 @@ app.get("/api/health", async (req, res) => {
             message: "Greenfield API is connected to PostgreSQL.",
         });
     } catch (error) {
-        console.error("Health-check failed:", error);
+        console.error("Health-check error name:", error.name);
+        console.error("Health-check error details:", error.message);
 
         res.status(500).json({
             status: "unhealthy",
