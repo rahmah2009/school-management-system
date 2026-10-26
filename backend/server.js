@@ -46,7 +46,7 @@ app.get("/api/health", async (req, res) => {
             message: "Greenfield API is connected to PostgreSQL.",
         });
     } catch (error) {
-        console.error("Health-check failed:", error.message);
+        console.error("Health-check failed:", error);
 
         res.status(500).json({
             status: "unhealthy",
