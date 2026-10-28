@@ -41,3 +41,21 @@ CREATE TABLE IF NOT EXISTS admins (
 
 ALTER TABLE admins
 ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'staff';
+
+-- Keep role values consistent on databases created by earlier app versions.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'admins_role_allowed'
+          AND conrelid = 'admins'::regclass
+    ) THEN
+        ALTER TABLE admins
+        ADD CONSTRAINT admins_role_allowed
+        CHECK (role IN ('super_admin', 'staff', 'viewer'));
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS students_class_name_idx ON students (class_name);
+CREATE INDEX IF NOT EXISTS teachers_department_idx ON teachers (department);
+CREATE INDEX IF NOT EXISTS admins_role_idx ON admins (role);

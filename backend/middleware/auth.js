@@ -72,7 +72,7 @@ async function authenticateAdmin(req, res, next) {
             });
         }
 
-        console.error("Authentication error:", error.message);
+        console.error("Authentication error details:", error);
 
         return res.status(500).json({
             success: false,

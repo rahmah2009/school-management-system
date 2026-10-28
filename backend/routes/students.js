@@ -1,8 +1,12 @@
 
 const express = require("express");
 const pool = require("../config/database");
+const { authenticateAdmin, requireRole } = require("../middleware/auth");
 
 const router = express.Router();
+
+// Student records are private to authenticated school staff.
+router.use(authenticateAdmin);
 
 // GET /api/students — Fetch all students
 router.get("/", async (req, res) => {
@@ -48,7 +52,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST /api/students — Register a student
-router.post("/", async (req, res) => {
+router.post("/", requireRole("super_admin"), async (req, res) => {
     const firstName = req.body.firstName?.trim();
     const middleName = req.body.middleName?.trim() || null;
     const lastName = req.body.lastName?.trim();
@@ -219,7 +223,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // PUT /api/students/:id — Update a student's details
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireRole("super_admin"), async (req, res) => {
     const { id } = req.params;
 
     if (!/^\d+$/.test(id)) {
@@ -289,7 +293,7 @@ router.put("/:id", async (req, res) => {
 
 
 // DELETE /api/students/:id — Delete a student
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireRole("super_admin"), async (req, res) => {
     const { id } = req.params;
 
     if (!/^\d+$/.test(id)) {

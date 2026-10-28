@@ -1,0 +1,11 @@
+GREENFIELD FRONTEND ENVIRONMENT SETUP
+
+Create a `.env` file in the frontend project root (the same directory as package.json) with:
+
+VITE_API_URL=http://localhost:5000/api
+
+For production, set VITE_API_URL in your frontend hosting dashboard to the deployed backend URL including `/api`, for example:
+
+VITE_API_URL=https://YOUR-BACKEND-HOST/api
+
+Do not commit `.env`. Vite variables are public to browser users, so never put secrets in VITE_* variables.

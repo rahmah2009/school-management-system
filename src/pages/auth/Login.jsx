@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
+import { apiRequest } from "../../services/api";
 
 function Login() {
     const navigate = useNavigate();
@@ -25,40 +26,24 @@ function Login() {
         setLoading(true);
 
         try {
-            const response = await fetch(
-                "http://localhost:5000/api/auth/login",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email: email.trim(),
-                        password,
-                    }),
-                }
-            );
+            const data = await apiRequest("/auth/login", {
+                method: "POST",
+                body: JSON.stringify({
+                    email: email.trim(),
+                    password,
+                }),
+            });
 
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                setError(data.message || "Login failed. Please try again.");
-                return;
+            if (!data.token || !data.admin) {
+                throw new Error("The server returned an incomplete login response.");
             }
 
-            // Temporary storage until we add a safer session strategy.
             sessionStorage.setItem("greenfield_admin_token", data.token);
-            sessionStorage.setItem(
-                "greenfield_admin",
-                JSON.stringify(data.admin)
-            );
-
-            navigate("/admin");
+            sessionStorage.setItem("greenfield_admin", JSON.stringify(data.admin));
+            navigate("/admin", { replace: true });
         } catch (error) {
             console.error("Login request failed:", error);
-            setError(
-                "Unable to connect to the server. Please try again."
-            );
+            setError(error.message || "Login failed. Please try again.");
         } finally {
             setLoading(false);
         }

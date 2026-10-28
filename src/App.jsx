@@ -12,6 +12,7 @@ import About from "./pages/public/About";
 import Academics from "./pages/public/Academics";
 import Teachers from "./pages/public/Teachers";
 import Login from "./pages/auth/Login";
+import Register from "./pages/public/Register";
 
 import Dashboard from "./pages/admin/Dashboard";
 import Students from "./pages/admin/Students";
@@ -38,6 +39,7 @@ export default function App() {
         </Route>
 
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* Admin */}
         <Route element={<AdminLayout />}>

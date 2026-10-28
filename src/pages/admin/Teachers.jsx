@@ -1,37 +1,13 @@
-import teachersData from "../../data/teachers";
 import departmentsData from "../../data/departments";
+import { getTeachers, createTeacher, updateTeacher, deleteTeacher } from "../../services/teacherApi";
 import { useEffect, useState } from "react";
 import { Edit, Plus, Search, Trash2, X } from "lucide-react";
 
 function Teachers() {
-    const [teachers, setTeachers] = useState(() => {
-        const savedTeachers = localStorage.getItem(
-            "greenfield_school_teachers"
-        );
-
-        if (savedTeachers) {
-            const parsedTeachers = JSON.parse(savedTeachers);
-
-            return parsedTeachers.map((savedTeacher) => {
-                const originalTeacher = teachersData.find(
-                    (teacher) => teacher.id === savedTeacher.id
-                );
-
-                return {
-                    ...originalTeacher,
-                    ...savedTeacher,
-                    email: savedTeacher.email || originalTeacher?.email || "",
-                    phone: savedTeacher.phone || originalTeacher?.phone || "",
-                    description:
-                        savedTeacher.description ||
-                        originalTeacher?.description ||
-                        "",
-                };
-            });
-        }
-
-        return teachersData;
-    });
+    const [teachers, setTeachers] = useState([]);
+    const [isLoadingTeachers, setIsLoadingTeachers] = useState(true);
+    const [apiError, setApiError] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
 
     const formatPhoneNumber = (phone) => {
         const cleaned = phone.replace(/\D/g, "");
@@ -78,26 +54,21 @@ function Teachers() {
     // ];
 
     useEffect(() => {
-        localStorage.setItem(
-            "greenfield_school_teachers",
-            JSON.stringify(teachers)
-        );
-    }, [teachers]);
+        let active = true;
+        getTeachers()
+            .then((items) => {
+                if (active) setTeachers(items);
+            })
+            .catch((err) => {
+                if (active) setApiError(err.message || "Unable to load teachers from the server.");
+            })
+            .finally(() => {
+                if (active) setIsLoadingTeachers(false);
+            });
+        return () => { active = false; };
+    }, []);
 
-    const generateTeacherId = (teacherList) => {
-        const numbers = teacherList
-            .map((teacher) =>
-                Number(teacher.id.replace("TCH-", ""))
-            )
-            .filter((number) => !Number.isNaN(number));
 
-        const nextNumber =
-            numbers.length > 0
-                ? Math.max(...numbers) + 1
-                : 1;
-
-        return `TCH-${String(nextNumber).padStart(3, "0")}`;
-    };
 
     const resetForm = () => {
         setTeacherName("");
@@ -120,7 +91,7 @@ function Teachers() {
         setShowForm(false);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!teacherName.trim()) {
@@ -150,9 +121,10 @@ function Teachers() {
             return;
         }
 
+        const normalizedPhone = phone.trim().replace(/\s+/g, "");
         const phonePattern = /^(\+234|0)[789][01]\d{8}$/;
 
-        if (!phonePattern.test(phone.trim())) {
+        if (!phonePattern.test(normalizedPhone)) {
             setError("Please enter a valid Nigerian phone number.");
             return;
         }
@@ -167,39 +139,33 @@ function Teachers() {
             return;
         }
 
-        if (editingTeacher) {
-            setTeachers((currentTeachers) =>
-                currentTeachers.map((teacher) =>
-                    teacher.id === editingTeacher.id
-                        ? {
-                            ...teacher,
-                            name: teacherName.trim(),
-                            subject: subject.trim(),
-                            description: description.trim(),
-                            department,
-                            email: email.trim(),
-                            phone: formatPhoneNumber(phone.trim()),
-                        }
-                        : teacher
-                )
-            );
-        } else {
-            const newTeacher = {
-                id: generateTeacherId(teachers),
-                name: teacherName.trim(),
-                subject: subject.trim(),
-                description: description.trim(),
-                department,
-                email: email.trim(),
-                phone: formatPhoneNumber(phone.trim()),
-            };
-            setTeachers((currentTeachers) => [
-                ...currentTeachers,
-                newTeacher,
-            ]);
-        }
+        const payload = {
+            name: teacherName.trim(),
+            subject: subject.trim(),
+            description: description.trim(),
+            department,
+            email: email.trim(),
+            phone: formatPhoneNumber(normalizedPhone),
+        };
 
-        handleCloseForm();
+        try {
+            setIsSaving(true);
+            setApiError("");
+            if (editingTeacher) {
+                const updated = await updateTeacher(editingTeacher.dbId, payload);
+                setTeachers((current) => current.map((teacher) =>
+                    teacher.dbId === updated.dbId ? updated : teacher
+                ));
+            } else {
+                const created = await createTeacher(payload);
+                setTeachers((current) => [...current, created]);
+            }
+            handleCloseForm();
+        } catch (err) {
+            setError(err.message || "Unable to save teacher.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleEdit = (teacher) => {
@@ -216,21 +182,31 @@ function Teachers() {
         setShowForm(true);
     };
 
-    const handleDelete = () => {
-        if (!teacherToDelete) return;
-
-        setTeachers((currentTeachers) =>
-            currentTeachers.filter(
-                (teacher) => teacher.id !== teacherToDelete.id
-            )
-        );
-
-        setTeacherToDelete(null);
+    const handleDelete = async () => {
+        if (!teacherToDelete?.dbId) return;
+        try {
+            setApiError("");
+            await deleteTeacher(teacherToDelete.dbId);
+            setTeachers((current) => current.filter((teacher) => teacher.dbId !== teacherToDelete.dbId));
+            setTeacherToDelete(null);
+        } catch (err) {
+            setApiError(err.message || "Unable to delete teacher.");
+        }
     };
 
-    const handleDeleteAll = () => {
-        setTeachers([]);
-        setShowDeleteAllModal(false);
+    const handleDeleteAll = async () => {
+        try {
+            setApiError("");
+            setIsSaving(true);
+            await Promise.all(teachers.map((teacher) => deleteTeacher(teacher.dbId)));
+            setTeachers([]);
+            setShowDeleteAllModal(false);
+        } catch (err) {
+            setApiError(err.message || "Unable to delete all teachers. Refresh and check the records.");
+            try { setTeachers(await getTeachers()); } catch { /* Keep current list. */ }
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const filteredTeachers = teachers.filter((teacher) => {
@@ -264,6 +240,11 @@ function Teachers() {
                     <p className="mt-2 text-gray-600">
                         Manage teachers and their information.
                     </p>
+                    {apiError && (
+                        <p role="alert" className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                            {apiError}
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -367,7 +348,9 @@ function Teachers() {
 
             {/* Teachers List */}
             <div className="mt-8">
-                {filteredTeachers.length === 0 ? (
+                {isLoadingTeachers ? (
+                    <p className="py-10 text-center text-gray-500">Loading teachers from the server...</p>
+                ) : filteredTeachers.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-green-200 bg-white p-10 text-center">
                         <h2 className="text-xl font-bold text-green-950">
                             No teachers found

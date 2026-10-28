@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -14,8 +13,8 @@ import {
 
 import StatCard from "../../components/common/StatCard";
 import classesData from "../../data/classes";
+import { getStudents } from "../../services/studentApi";
 
-const STUDENTS_KEY = "greenfield_school_students";
 const TEACHERS_KEY = "greenfield_school_teachers";
 const RESULTS_KEY = "greenfield_school_results";
 
@@ -59,7 +58,11 @@ function getStudentName(student) {
         return student.name;
     }
 
-    return [student.firstName, student.lastName]
+    return [
+        student.firstName,
+        student.middleName,
+        student.lastName,
+    ]
         .filter(Boolean)
         .join(" ") || "Unnamed Student";
 }
@@ -73,10 +76,32 @@ function Dashboard() {
     const [teachers, setTeachers] = useState([]);
     const [results, setResults] = useState([]);
 
-    const refreshDashboard = useCallback(() => {
-        setStudents(readStorage(STUDENTS_KEY));
+    const [studentsLoading, setStudentsLoading] = useState(true);
+    const [studentsError, setStudentsError] = useState("");
+
+    const refreshDashboard = useCallback(async () => {
+        // These records still use localStorage for now.
         setTeachers(readStorage(TEACHERS_KEY));
         setResults(readStorage(RESULTS_KEY));
+
+        setStudentsLoading(true);
+        setStudentsError("");
+
+        try {
+            const backendStudents = await getStudents();
+
+            setStudents(
+                Array.isArray(backendStudents) ? backendStudents : []
+            );
+        } catch (error) {
+            console.error("Dashboard student fetch failed:", error);
+
+            setStudentsError(
+                error.message || "Unable to load student records."
+            );
+        } finally {
+            setStudentsLoading(false);
+        }
     }, []);
 
     useEffect(() => {
@@ -86,11 +111,7 @@ function Dashboard() {
             if (
                 !event ||
                 !event.key ||
-                [
-                    STUDENTS_KEY,
-                    TEACHERS_KEY,
-                    RESULTS_KEY,
-                ].includes(event.key)
+                [TEACHERS_KEY, RESULTS_KEY].includes(event.key)
             ) {
                 refreshDashboard();
             }
@@ -103,19 +124,21 @@ function Dashboard() {
         window.addEventListener("focus", handleDashboardUpdate);
         window.addEventListener("storage", handleStorageChange);
 
-        // Refresh when other parts of the application save records.
         window.addEventListener(
             "greenfield-results-updated",
             handleDashboardUpdate
         );
+
         window.addEventListener(
             "greenfield-students-updated",
             handleDashboardUpdate
         );
+
         window.addEventListener(
             "greenfield-teachers-updated",
             handleDashboardUpdate
         );
+
         window.addEventListener(
             "greenfield-classes-updated",
             handleDashboardUpdate
@@ -129,14 +152,17 @@ function Dashboard() {
                 "greenfield-results-updated",
                 handleDashboardUpdate
             );
+
             window.removeEventListener(
                 "greenfield-students-updated",
                 handleDashboardUpdate
             );
+
             window.removeEventListener(
                 "greenfield-teachers-updated",
                 handleDashboardUpdate
             );
+
             window.removeEventListener(
                 "greenfield-classes-updated",
                 handleDashboardUpdate
@@ -171,12 +197,14 @@ function Dashboard() {
     const resultStatistics = useMemo(() => {
         const submitted = results.filter(
             (result) =>
-                String(result.status || "draft").toLowerCase() === "submitted"
+                String(result.status || "draft").toLowerCase() ===
+                "submitted"
         ).length;
 
         const approved = results.filter(
             (result) =>
-                String(result.status || "draft").toLowerCase() === "approved"
+                String(result.status || "draft").toLowerCase() ===
+                "approved"
         ).length;
 
         return {
@@ -204,7 +232,8 @@ function Dashboard() {
                     </h1>
 
                     <p className="mt-2 text-gray-600">
-                        Welcome to Greenfield School&apos;s management dashboard.
+                        Welcome to Greenfield School&apos;s management
+                        dashboard.
                     </p>
                 </div>
 
@@ -234,7 +263,13 @@ function Dashboard() {
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard
                         title="TOTAL STUDENTS"
-                        value={students.length}
+                        value={
+                            studentsError
+                                ? "—"
+                                : studentsLoading && students.length === 0
+                                  ? "..."
+                                  : students.length
+                        }
                         icon={<Users />}
                         link="/admin/students"
                     />
@@ -464,7 +499,29 @@ function Dashboard() {
                     </Link>
                 </div>
 
-                {recentStudents.length === 0 ? (
+                {studentsLoading && students.length === 0 ? (
+                    <p className="mt-6 rounded-xl bg-green-50 p-6 text-center text-gray-600">
+                        Loading student records...
+                    </p>
+                ) : studentsError ? (
+                    <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-5">
+                        <p className="font-semibold text-red-800">
+                            Unable to load students
+                        </p>
+
+                        <p className="mt-2 text-sm text-red-700">
+                            {studentsError}
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={refreshDashboard}
+                            className="mt-4 rounded-lg bg-green-950 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                ) : recentStudents.length === 0 ? (
                     <div className="mt-6 rounded-xl border border-dashed border-green-200 bg-green-50/50 px-5 py-10 text-center">
                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-green-800 shadow-sm">
                             <Users size={24} />
@@ -491,7 +548,12 @@ function Dashboard() {
                     <div className="mt-5 space-y-3">
                         {recentStudents.map((student, index) => (
                             <div
-                                key={student.id || student.studentId || `${getStudentName(student)}-${index}`}
+                                key={
+                                    student.dbId ||
+                                    student.studentId ||
+                                    student.id ||
+                                    `${getStudentName(student)}-${index}`
+                                }
                                 className="flex flex-col gap-3 rounded-xl border border-green-50 bg-green-50/50 p-4 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div className="flex min-w-0 items-center gap-3">
@@ -522,7 +584,8 @@ function Dashboard() {
                                     ) : null}
 
                                     <p className="mt-1 text-sm text-gray-500">
-                                        Added: {formatDate(getStudentDate(student))}
+                                        Added:{" "}
+                                        {formatDate(getStudentDate(student))}
                                     </p>
                                 </div>
                             </div>
