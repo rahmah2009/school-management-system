@@ -91,6 +91,15 @@ function Login() {
                         >
                             {showPassword ? "Hide password" : "Show password"}
                         </button>
+
+                        <div className="mt-2 text-right">
+                            <Link
+                                to="/forgot-password"
+                                className="text-sm font-semibold text-green-800 hover:text-green-950 hover:underline"
+                            >
+                                Forgot Password?
+                            </Link>
+                        </div>
                     </div>
 
                     {error && (

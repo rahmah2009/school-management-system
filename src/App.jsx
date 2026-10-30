@@ -12,6 +12,8 @@ import About from "./pages/public/About";
 import Academics from "./pages/public/Academics";
 import Teachers from "./pages/public/Teachers";
 import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Register from "./pages/public/Register";
 
 import Dashboard from "./pages/admin/Dashboard";
@@ -38,8 +40,11 @@ export default function App() {
           <Route path="/teachers" element={<Teachers />} />
         </Route>
 
+        {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Admin */}
         <Route element={<AdminLayout />}>
@@ -50,7 +55,7 @@ export default function App() {
           <Route path="/admin/sessions" element={<Sessions />} />
           <Route path="/admin/results" element={<Results />} />
           <Route path="/admin/messages" element={<Messages />} />
-          <Route path="/admin/settings" element={<Settings/>} />
+          <Route path="/admin/settings" element={<Settings />} />
         </Route>
       </Routes>
     </>
