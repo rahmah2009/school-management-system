@@ -59,3 +59,18 @@ END $$;
 CREATE INDEX IF NOT EXISTS students_class_name_idx ON students (class_name);
 CREATE INDEX IF NOT EXISTS teachers_department_idx ON teachers (department);
 CREATE INDEX IF NOT EXISTS admins_role_idx ON admins (role);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_email
+ON password_reset_tokens (email);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expiry
+ON password_reset_tokens (expires_at);
