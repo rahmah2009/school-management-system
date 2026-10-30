@@ -28,8 +28,10 @@ function AdminLayout() {
             <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <div className="flex min-w-0 flex-1 flex-col">
                 <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
-                <main className="flex-1 p-4 md:p-6">
-                    <Outlet />
+                <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
+                    <div className="page-container">
+                        <Outlet />
+                    </div>
                 </main>
             </div>
         </div>
