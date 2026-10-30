@@ -12,7 +12,7 @@ const PORT = Number(process.env.PORT) || 5000;
 
 const defaultOrigins = [
     "http://localhost:5173",
-    "https://school-management-system-phi-lovat.vercel.app",
+    "https://school-management-system-2shg.vercel.app",
 ];
 const configuredOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "")
     .split(",")
