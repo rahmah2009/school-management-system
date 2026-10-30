@@ -1,8 +1,8 @@
 
 import { useCallback, useEffect, useState } from "react";
+import { getStudents } from "../../services/studentApi";
 
 const RESULTS_KEY = "greenfield_school_results";
-const STUDENTS_KEY = "greenfield_school_students";
 const SESSIONS_KEY = "greenfield_school_sessions";
 const REMARKS_KEY = "greenfield_school_remarks";
 const SETTINGS_KEY = "greenfield_school_settings";
@@ -184,10 +184,27 @@ function getStatusLabel(status) {
   }
 }
 
+function normalizeStudent(student) {
+  const firstName = student.first_name || student.firstName || "";
+  const middleName = student.middle_name || student.middleName || "";
+  const lastName = student.last_name || student.lastName || "";
+
+  return {
+    ...student,
+    id: student.id,
+    studentId: student.student_id || student.studentId || "",
+    name:
+      student.name ||
+      [firstName, middleName, lastName].filter(Boolean).join(" ") ||
+      student.student_id ||
+      `Student ${student.id}`,
+    className: student.className || student.class_name || student.class || "",
+    department: student.department || "",
+  };
+}
+
 function StudentReportCard() {
-  const [students, setStudents] = useState(() =>
-    readArray(STUDENTS_KEY)
-  );
+  const [students, setStudents] = useState([]);
 
   const [gradingScale, setGradingScale] = useState(readGradingScale);
 
@@ -214,8 +231,41 @@ function StudentReportCard() {
   const [term, setTerm] = useState("");
   const [remarkMessage, setRemarkMessage] = useState("");
 
-  const refreshData = useCallback(() => {
-    setStudents(readArray(STUDENTS_KEY));
+  const refreshData = useCallback(async () => {
+    // Student records now come from the backend, not localStorage.
+    try {
+      const response = await getStudents();
+
+      // Support an array response or an API object containing the array.
+      const studentList = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.students)
+          ? response.students
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+
+      const normalizedStudents = studentList.map(normalizeStudent);
+      setStudents(normalizedStudents);
+
+      setStudentId((currentId) => {
+        if (
+          currentId &&
+          normalizedStudents.some(
+            (item) => String(item.id) === String(currentId)
+          )
+        ) {
+          return currentId;
+        }
+
+        return "";
+      });
+    } catch (error) {
+      console.error("Could not load report card students:", error);
+      // Keep previously loaded students visible if a refresh temporarily fails.
+    }
+
+    // Results, sessions, remarks and grading settings remain in localStorage.
     setSessions(readArray(SESSIONS_KEY));
     setResults(readArray(RESULTS_KEY));
     setRemarks(readRemarks());
@@ -227,30 +277,16 @@ function StudentReportCard() {
 
     window.addEventListener("focus", refreshData);
     window.addEventListener("storage", refreshData);
-
-    window.addEventListener(
-      "greenfield-results-updated",
-      refreshData
-    );
-
-    window.addEventListener(
-      "greenfield-settings-updated",
-      refreshData
-    );
+    window.addEventListener("greenfield-results-updated", refreshData);
+    window.addEventListener("greenfield-settings-updated", refreshData);
+    window.addEventListener("greenfield-students-updated", refreshData);
 
     return () => {
       window.removeEventListener("focus", refreshData);
       window.removeEventListener("storage", refreshData);
-
-      window.removeEventListener(
-        "greenfield-results-updated",
-        refreshData
-      );
-
-      window.removeEventListener(
-        "greenfield-settings-updated",
-        refreshData
-      );
+      window.removeEventListener("greenfield-results-updated", refreshData);
+      window.removeEventListener("greenfield-settings-updated", refreshData);
+      window.removeEventListener("greenfield-students-updated", refreshData);
     };
   }, [refreshData]);
 
@@ -431,7 +467,7 @@ function StudentReportCard() {
 
             {students.map((item) => (
               <option key={item.id} value={String(item.id)}>
-                {item.name} ({item.id})
+                {item.name} ({item.studentId || item.id})
               </option>
             ))}
           </select>
