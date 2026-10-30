@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -14,10 +15,11 @@ import {
 import StatCard from "../../components/common/StatCard";
 import classesData from "../../data/classes";
 import { getStudents } from "../../services/studentApi";
+import { getTeachers } from "../../services/teacherApi";
 
-const TEACHERS_KEY = "greenfield_school_teachers";
 const RESULTS_KEY = "greenfield_school_results";
 
+// Read records still stored in localStorage.
 function readStorage(key) {
     try {
         const savedData = localStorage.getItem(key);
@@ -35,6 +37,7 @@ function readStorage(key) {
     }
 }
 
+// Format dates for display.
 function formatDate(dateValue) {
     if (!dateValue) {
         return "Date unavailable";
@@ -53,22 +56,28 @@ function formatDate(dateValue) {
     });
 }
 
+// Get a student's full name.
 function getStudentName(student) {
     if (student.name) {
         return student.name;
     }
 
     return [
-        student.firstName,
-        student.middleName,
-        student.lastName,
+        student.firstName || student.first_name,
+        student.middleName || student.middle_name,
+        student.lastName || student.last_name,
     ]
         .filter(Boolean)
         .join(" ") || "Unnamed Student";
 }
 
+// Get a student's creation date.
 function getStudentDate(student) {
-    return student.createdAt || student.created_at || null;
+    return (
+        student.createdAt ||
+        student.created_at ||
+        null
+    );
 }
 
 function Dashboard() {
@@ -77,13 +86,17 @@ function Dashboard() {
     const [results, setResults] = useState([]);
 
     const [studentsLoading, setStudentsLoading] = useState(true);
-    const [studentsError, setStudentsError] = useState("");
+    const [teachersLoading, setTeachersLoading] = useState(true);
 
+    const [studentsError, setStudentsError] = useState("");
+    const [teachersError, setTeachersError] = useState("");
+
+    // Refresh dashboard records.
     const refreshDashboard = useCallback(async () => {
-        // These records still use localStorage for now.
-        setTeachers(readStorage(TEACHERS_KEY));
+        // Results are still stored in localStorage.
         setResults(readStorage(RESULTS_KEY));
 
+        // Fetch students from the backend.
         setStudentsLoading(true);
         setStudentsError("");
 
@@ -91,7 +104,9 @@ function Dashboard() {
             const backendStudents = await getStudents();
 
             setStudents(
-                Array.isArray(backendStudents) ? backendStudents : []
+                Array.isArray(backendStudents)
+                    ? backendStudents
+                    : []
             );
         } catch (error) {
             console.error("Dashboard student fetch failed:", error);
@@ -102,8 +117,31 @@ function Dashboard() {
         } finally {
             setStudentsLoading(false);
         }
+
+        // Fetch teachers from the backend.
+        setTeachersLoading(true);
+        setTeachersError("");
+
+        try {
+            const backendTeachers = await getTeachers();
+
+            setTeachers(
+                Array.isArray(backendTeachers)
+                    ? backendTeachers
+                    : []
+            );
+        } catch (error) {
+            console.error("Dashboard teacher fetch failed:", error);
+
+            setTeachersError(
+                error.message || "Unable to load teacher records."
+            );
+        } finally {
+            setTeachersLoading(false);
+        }
     }, []);
 
+    // Load and refresh dashboard data.
     useEffect(() => {
         refreshDashboard();
 
@@ -111,7 +149,7 @@ function Dashboard() {
             if (
                 !event ||
                 !event.key ||
-                [TEACHERS_KEY, RESULTS_KEY].includes(event.key)
+                event.key === RESULTS_KEY
             ) {
                 refreshDashboard();
             }
@@ -170,6 +208,7 @@ function Dashboard() {
         };
     }, [refreshDashboard]);
 
+    // Current date.
     const today = new Date().toLocaleDateString("en-NG", {
         weekday: "long",
         day: "numeric",
@@ -177,14 +216,20 @@ function Dashboard() {
         year: "numeric",
     });
 
+    // Get the five most recently added students.
     const recentStudents = useMemo(() => {
         return [...students]
             .sort((a, b) => {
                 const dateA = getStudentDate(a);
                 const dateB = getStudentDate(b);
 
-                const timeA = dateA ? new Date(dateA).getTime() : 0;
-                const timeB = dateB ? new Date(dateB).getTime() : 0;
+                const timeA = dateA
+                    ? new Date(dateA).getTime()
+                    : 0;
+
+                const timeB = dateB
+                    ? new Date(dateB).getTime()
+                    : 0;
 
                 return (
                     (Number.isNaN(timeB) ? 0 : timeB) -
@@ -194,6 +239,7 @@ function Dashboard() {
             .slice(0, 5);
     }, [students]);
 
+    // Calculate result statistics.
     const resultStatistics = useMemo(() => {
         const submitted = results.filter(
             (result) =>
@@ -214,12 +260,14 @@ function Dashboard() {
         };
     }, [results]);
 
+    // Calculate total classes.
     const totalClasses = Array.isArray(classesData)
         ? classesData.length
         : 0;
 
     return (
         <div className="space-y-8">
+
             {/* Page heading */}
             <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
@@ -261,14 +309,15 @@ function Dashboard() {
                 </div>
 
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
                     <StatCard
                         title="TOTAL STUDENTS"
                         value={
                             studentsError
                                 ? "—"
                                 : studentsLoading && students.length === 0
-                                  ? "..."
-                                  : students.length
+                                    ? "..."
+                                    : students.length
                         }
                         icon={<Users />}
                         link="/admin/students"
@@ -276,7 +325,13 @@ function Dashboard() {
 
                     <StatCard
                         title="TOTAL TEACHERS"
-                        value={teachers.length}
+                        value={
+                            teachersError
+                                ? "—"
+                                : teachersLoading && teachers.length === 0
+                                    ? "..."
+                                    : teachers.length
+                        }
                         icon={<GraduationCap />}
                         link="/admin/teachers"
                     />
@@ -294,7 +349,14 @@ function Dashboard() {
                         icon={<ClipboardCheck />}
                         link="/admin/results"
                     />
+
                 </div>
+
+                {teachersError && (
+                    <p className="mt-3 text-sm text-red-600">
+                        Unable to load teacher statistics: {teachersError}
+                    </p>
+                )}
             </section>
 
             {/* Results overview */}
@@ -320,6 +382,7 @@ function Dashboard() {
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
+
                     <div className="rounded-xl bg-green-50 p-5">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-white p-2 text-green-800 shadow-sm">
@@ -367,6 +430,7 @@ function Dashboard() {
                             {resultStatistics.approved}
                         </p>
                     </div>
+
                 </div>
             </section>
 
@@ -383,6 +447,7 @@ function Dashboard() {
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
                     <Link
                         to="/admin/students"
                         className="group flex items-center gap-4 rounded-xl border border-green-100 p-4 transition hover:-translate-y-1 hover:border-green-300 hover:shadow-md"
@@ -395,6 +460,7 @@ function Dashboard() {
                             <h3 className="font-bold text-green-950">
                                 Manage Students
                             </h3>
+
                             <p className="mt-1 text-sm text-gray-600">
                                 Student records
                             </p>
@@ -418,6 +484,7 @@ function Dashboard() {
                             <h3 className="font-bold text-green-950">
                                 Manage Teachers
                             </h3>
+
                             <p className="mt-1 text-sm text-gray-600">
                                 Staff records
                             </p>
@@ -441,6 +508,7 @@ function Dashboard() {
                             <h3 className="font-bold text-green-950">
                                 Manage Classes
                             </h3>
+
                             <p className="mt-1 text-sm text-gray-600">
                                 Class information
                             </p>
@@ -464,6 +532,7 @@ function Dashboard() {
                             <h3 className="font-bold text-green-950">
                                 Manage Results
                             </h3>
+
                             <p className="mt-1 text-sm text-gray-600">
                                 Record and approve
                             </p>
@@ -474,6 +543,7 @@ function Dashboard() {
                             className="text-gray-400 transition group-hover:translate-x-1 group-hover:text-green-800"
                         />
                     </Link>
+
                 </div>
             </section>
 
@@ -570,6 +640,7 @@ function Dashboard() {
 
                                         <p className="mt-1 text-sm text-gray-600">
                                             {student.className ||
+                                                student.class_name ||
                                                 student.class ||
                                                 "Class not specified"}
                                         </p>
@@ -577,9 +648,11 @@ function Dashboard() {
                                 </div>
 
                                 <div className="sm:text-right">
-                                    {student.studentId || student.id ? (
+                                    {student.studentId || student.student_id || student.id ? (
                                         <p className="text-sm font-medium text-green-900">
-                                            {student.studentId || student.id}
+                                            {student.studentId ||
+                                                student.student_id ||
+                                                student.id}
                                         </p>
                                     ) : null}
 
@@ -593,6 +666,7 @@ function Dashboard() {
                     </div>
                 )}
             </section>
+
         </div>
     );
 }

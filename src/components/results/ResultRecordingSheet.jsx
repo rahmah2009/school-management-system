@@ -1,6 +1,6 @@
-
 import { useEffect, useMemo, useState } from "react";
 import subjectsData from "../../data/subjects";
+import { getStudents } from "../../services/studentApi";
 
 const RESULTS_KEY = "greenfield_school_results";
 const STUDENTS_KEY = "greenfield_school_students";
@@ -28,6 +28,29 @@ function readArray(key) {
         console.error(`Could not read ${key}:`, error);
         return [];
     }
+}
+
+function normalizeStudent(student) {
+    const firstName = student.first_name || student.firstName || "";
+    const middleName = student.middle_name || student.middleName || "";
+    const lastName = student.last_name || student.lastName || "";
+
+    return {
+        ...student,
+        id: student.id,
+        studentId: student.student_id || student.studentId || "",
+        name:
+            student.name ||
+            [firstName, middleName, lastName]
+                .filter(Boolean)
+                .join(" "),
+        className:
+            student.className ||
+            student.class_name ||
+            student.class ||
+            "",
+        department: student.department || "",
+    };
 }
 
 // Read the grading scale saved in Admin Settings.
@@ -134,66 +157,148 @@ function ResultRecordingSheet() {
     const [showDraftConfirmation, setShowDraftConfirmation] =
         useState(false);
 
-    // Load existing school data.
+    // Load students from the backend and other records from localStorage.
     useEffect(() => {
-        const loadedStudents = readArray(STUDENTS_KEY);
-        const loadedSessions = readArray(SESSIONS_KEY);
-        const loadedResults = readArray(RESULTS_KEY);
+        let isMounted = true;
 
-        setStudents(loadedStudents);
-        setSessions(loadedSessions);
-        setSavedResults(loadedResults);
-        setGradingScale(readGradingScale());
+        async function loadSchoolData() {
+            try {
+                const [backendStudents] = await Promise.all([
+                    getStudents(),
+                ]);
 
-        if (loadedStudents.length > 0) {
-            setSelectedStudent(String(loadedStudents[0].id));
+                if (!isMounted) return;
+
+                const loadedStudents = Array.isArray(backendStudents)
+                    ? backendStudents.map(normalizeStudent)
+                    : [];
+
+                const loadedSessions = readArray(SESSIONS_KEY);
+                const loadedResults = readArray(RESULTS_KEY);
+
+                setStudents(loadedStudents);
+                setSessions(loadedSessions);
+                setSavedResults(loadedResults);
+                setGradingScale(readGradingScale());
+
+                if (loadedStudents.length > 0) {
+                    setSelectedStudent((current) => {
+                        const stillExists = loadedStudents.some(
+                            (student) => String(student.id) === current
+                        );
+
+                        return stillExists
+                            ? current
+                            : String(loadedStudents[0].id);
+                    });
+                }
+
+                const activeSession = loadedSessions.find(
+                    (session) => session.isActive
+                );
+
+                if (activeSession) {
+                    setSelectedSession(String(activeSession.id));
+                } else if (loadedSessions.length > 0) {
+                    setSelectedSession((current) => {
+                        const stillExists = loadedSessions.some(
+                            (session) => String(session.id) === current
+                        );
+
+                        return stillExists
+                            ? current
+                            : String(loadedSessions[0].id);
+                    });
+                }
+            } catch (error) {
+                console.error("Could not load result recording data:", error);
+            }
         }
 
-        const activeSession = loadedSessions.find(
-            (session) => session.isActive
-        );
+        loadSchoolData();
 
-        if (activeSession) {
-            setSelectedSession(String(activeSession.id));
-        } else if (loadedSessions.length > 0) {
-            setSelectedSession(String(loadedSessions[0].id));
-        }
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
-    // Refresh school data and grading settings when they change.
+    // Refresh backend students and locally stored result/session data.
     useEffect(() => {
-        function refresh() {
-            setStudents(readArray(STUDENTS_KEY));
-            setSessions(readArray(SESSIONS_KEY));
-            setSavedResults(readArray(RESULTS_KEY));
-            setGradingScale(readGradingScale());
+        let isMounted = true;
+
+        async function refresh() {
+            try {
+                const backendStudents = await getStudents();
+
+                if (!isMounted) return;
+
+                const loadedStudents = Array.isArray(backendStudents)
+                    ? backendStudents.map(normalizeStudent)
+                    : [];
+
+                setStudents(loadedStudents);
+
+                setSessions(readArray(SESSIONS_KEY));
+                setSavedResults(readArray(RESULTS_KEY));
+                setGradingScale(readGradingScale());
+
+                setSelectedStudent((current) => {
+                    if (
+                        loadedStudents.some(
+                            (student) => String(student.id) === current
+                        )
+                    ) {
+                        return current;
+                    }
+
+                    return String(loadedStudents[0]?.id || "");
+                });
+            } catch (error) {
+                console.error("Could not refresh result recording data:", error);
+            }
         }
 
-        window.addEventListener("focus", refresh);
-        window.addEventListener("storage", refresh);
+        const handleRefresh = () => {
+            refresh();
+        };
+
+        window.addEventListener("focus", handleRefresh);
+        window.addEventListener("storage", handleRefresh);
 
         window.addEventListener(
             "greenfield-results-updated",
-            refresh
+            handleRefresh
         );
 
         window.addEventListener(
             "greenfield-settings-updated",
-            refresh
+            handleRefresh
+        );
+
+        window.addEventListener(
+            "greenfield-students-updated",
+            handleRefresh
         );
 
         return () => {
-            window.removeEventListener("focus", refresh);
-            window.removeEventListener("storage", refresh);
+            isMounted = false;
+
+            window.removeEventListener("focus", handleRefresh);
+            window.removeEventListener("storage", handleRefresh);
 
             window.removeEventListener(
                 "greenfield-results-updated",
-                refresh
+                handleRefresh
             );
 
             window.removeEventListener(
                 "greenfield-settings-updated",
-                refresh
+                handleRefresh
+            );
+
+            window.removeEventListener(
+                "greenfield-students-updated",
+                handleRefresh
             );
         };
     }, []);
@@ -781,11 +886,10 @@ function ResultRecordingSheet() {
                         <ResultDetails />
 
                         <div
-                            className={`flex gap-3 rounded-xl border p-4 ${
-                                isDraft
-                                    ? "border-blue-200 bg-blue-50"
-                                    : "border-amber-200 bg-amber-50"
-                            }`}
+                            className={`flex gap-3 rounded-xl border p-4 ${isDraft
+                                ? "border-blue-200 bg-blue-50"
+                                : "border-amber-200 bg-amber-50"
+                                }`}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -793,11 +897,10 @@ function ResultRecordingSheet() {
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="1.8"
-                                className={`mt-0.5 h-5 w-5 shrink-0 ${
-                                    isDraft
-                                        ? "text-blue-700"
-                                        : "text-amber-700"
-                                }`}
+                                className={`mt-0.5 h-5 w-5 shrink-0 ${isDraft
+                                    ? "text-blue-700"
+                                    : "text-amber-700"
+                                    }`}
                                 aria-hidden="true"
                             >
                                 <circle cx="12" cy="12" r="9" />
@@ -810,20 +913,18 @@ function ResultRecordingSheet() {
 
                             <div>
                                 <p
-                                    className={`text-sm font-semibold ${
-                                        isDraft
-                                            ? "text-blue-950"
-                                            : "text-amber-950"
-                                    }`}
+                                    className={`text-sm font-semibold ${isDraft
+                                        ? "text-blue-950"
+                                        : "text-amber-950"
+                                        }`}
                                 >
                                     {noticeTitle}
                                 </p>
                                 <p
-                                    className={`mt-1 text-sm leading-5 ${
-                                        isDraft
-                                            ? "text-blue-900"
-                                            : "text-amber-900"
-                                    }`}
+                                    className={`mt-1 text-sm leading-5 ${isDraft
+                                        ? "text-blue-900"
+                                        : "text-amber-900"
+                                        }`}
                                 >
                                     {notice}
                                 </p>
@@ -911,12 +1012,9 @@ function ResultRecordingSheet() {
                         <label className="mb-1 block text-sm font-medium text-gray-700">
                             Student
                         </label>
-
                         <select
                             value={selectedStudent}
-                            onChange={(event) =>
-                                setSelectedStudent(event.target.value)
-                            }
+                            onChange={(event) => setSelectedStudent(event.target.value)}
                             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-green-700"
                         >
                             <option value="">Select student</option>
@@ -984,12 +1082,9 @@ function ResultRecordingSheet() {
                         <strong>{student.name}</strong>
                         {" · "}
                         {student.className}
-                        {student.department
-                            ? ` · ${student.department}`
-                            : ""}
+                        {student.department ? ` · ${student.department}` : ""}
                     </div>
                 )}
-
                 {availableSubjects.length > 0 ? (
                     <>
                         <div className="overflow-x-auto rounded-xl border border-gray-200">
@@ -1089,11 +1184,10 @@ function ResultRecordingSheet() {
                     <div
                         role="status"
                         aria-live="polite"
-                        className={`rounded-lg p-3 text-sm ${
-                            messageType === "success"
-                                ? "bg-green-50 text-green-800"
-                                : "bg-red-50 text-red-800"
-                        }`}
+                        className={`rounded-lg p-3 text-sm ${messageType === "success"
+                            ? "bg-green-50 text-green-800"
+                            : "bg-red-50 text-red-800"
+                            }`}
                     >
                         {message}
                     </div>
