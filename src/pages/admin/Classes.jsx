@@ -1,18 +1,51 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import classesData from "../../data/classes";
+import { getStudents } from "../../services/studentApi";
 
 function Classes() {
     const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        const savedStudents = localStorage.getItem(
-            "greenfield_school_students"
-        );
+        let isMounted = true;
 
-        if (savedStudents) {
-            setStudents(JSON.parse(savedStudents));
+        async function fetchStudents() {
+            try {
+                setLoading(true);
+                setError("");
+
+                const backendStudents = await getStudents();
+
+                if (isMounted) {
+                    setStudents(
+                        Array.isArray(backendStudents)
+                            ? backendStudents
+                            : []
+                    );
+                }
+            } catch (err) {
+                console.error("Failed to fetch students:", err);
+
+                if (isMounted) {
+                    setError(
+                        err.message || "Unable to load student records."
+                    );
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
         }
+
+        fetchStudents();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     return (
@@ -25,11 +58,28 @@ function Classes() {
                 Manage school classes here.
             </p>
 
+            {error && (
+                <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+                    <p className="font-medium text-red-700">
+                        {error}
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="mt-3 text-sm font-semibold text-green-800 hover:underline"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            )}
+
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {classesData.map((schoolClass) => {
                     const studentCount = students.filter(
                         (student) =>
-                            student.className === schoolClass.name
+                            String(student.className || "").trim().toLowerCase() ===
+                            String(schoolClass.name || "").trim().toLowerCase()
                     ).length;
 
                     return (
@@ -57,10 +107,13 @@ function Classes() {
                             </p>
 
                             <p className="mt-4 font-semibold text-green-950">
-                                {studentCount}{" "}
-                                {studentCount === 1
-                                    ? "Student"
-                                    : "Students"}
+                                {loading
+                                    ? "Loading..."
+                                    : `${studentCount} ${
+                                        studentCount === 1
+                                            ? "Student"
+                                            : "Students"
+                                    }`}
                             </p>
                         </Link>
                     );
