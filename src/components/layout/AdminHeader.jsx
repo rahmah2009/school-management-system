@@ -28,11 +28,19 @@ function readStorage(key) {
     }
 }
 
+function getStoredAdmin() {
+    try {
+        return JSON.parse(
+            sessionStorage.getItem("greenfield_admin") || "null"
+        );
+    } catch {
+        return null;
+    }
+}
+
 // Generate a stable ID for each result notification.
 function getResultNotificationId(result) {
-    const resultId =
-        result.id ??
-        result.resultId;
+    const resultId = result.id ?? result.resultId;
 
     if (resultId !== undefined && resultId !== null) {
         const submissionDate =
@@ -44,7 +52,6 @@ function getResultNotificationId(result) {
         return `result-${resultId}-${submissionDate}`;
     }
 
-    // Fallback for older results without an ID.
     return `result-${result.studentId ?? ""}-${
         result.classId ?? result.className ?? ""
     }-${result.sessionId ?? result.session ?? ""}-${
@@ -55,17 +62,23 @@ function getResultNotificationId(result) {
 function AdminHeader({ onMenuClick }) {
     const navigate = useNavigate();
 
+    const [admin, setAdmin] = useState(getStoredAdmin);
+    const isSuperAdmin = admin?.role === "super_admin";
+
     const [messages, setMessages] = useState([]);
     const [results, setResults] = useState([]);
     const [students, setStudents] = useState([]);
+
     const [readResultIds, setReadResultIds] = useState(
         () => readStorage(READ_RESULTS_KEY)
     );
+
     const [isOpen, setIsOpen] = useState(false);
 
-    // Refresh notifications whenever relevant data changes.
+    // Refresh notifications and admin role when relevant data changes.
     useEffect(() => {
         function refreshNotifications() {
+            setAdmin(getStoredAdmin());
             setMessages(readStorage(MESSAGES_KEY));
             setResults(readStorage(RESULTS_KEY));
             setStudents(readStorage(STUDENTS_KEY));
@@ -88,15 +101,8 @@ function AdminHeader({ onMenuClick }) {
         );
 
         return () => {
-            window.removeEventListener(
-                "focus",
-                refreshNotifications
-            );
-
-            window.removeEventListener(
-                "storage",
-                refreshNotifications
-            );
+            window.removeEventListener("focus", refreshNotifications);
+            window.removeEventListener("storage", refreshNotifications);
 
             window.removeEventListener(
                 "greenfield-messages-updated",
@@ -110,17 +116,15 @@ function AdminHeader({ onMenuClick }) {
         };
     }, []);
 
-    // Unread messages only.
+    // Unread messages.
     const unreadMessages = messages.filter(
         (message) => message.isRead !== true
     );
 
-    // All submitted results remain awaiting review,
-    // whether their notifications have been read or not.
+    // All submitted results awaiting review.
     const submittedResults = results.filter(
         (result) =>
-            String(result.status || "").toLowerCase() ===
-            "submitted"
+            String(result.status || "").toLowerCase() === "submitted"
     );
 
     // Only unread submitted results count as notifications.
@@ -131,26 +135,26 @@ function AdminHeader({ onMenuClick }) {
             )
     );
 
-    // Build the notification list.
+    // Build notifications according to admin role.
     const notifications = [
-        ...unreadMessages.map((message) => ({
-            ...message,
-            notificationType: "message",
-            notificationDate: message.createdAt || "",
-        })),
+        ...(isSuperAdmin
+            ? unreadMessages.map((message) => ({
+                  ...message,
+                  notificationType: "message",
+                  notificationDate: message.createdAt || "",
+              }))
+            : []),
 
         ...unreadResults.map((result) => {
             const student = students.find(
                 (item) =>
-                    String(item.id) ===
-                    String(result.studentId)
+                    String(item.id) === String(result.studentId)
             );
 
             return {
                 ...result,
                 notificationType: "result",
-                notificationId:
-                    getResultNotificationId(result),
+                notificationId: getResultNotificationId(result),
 
                 studentName:
                     result.studentName ||
@@ -181,7 +185,7 @@ function AdminHeader({ onMenuClick }) {
         return dateB - dateA;
     });
 
-    // The badge represents unread notifications only.
+    // Only notifications visible to the current role are counted.
     const notificationCount = notifications.length;
 
     function openMessagesPage() {
@@ -222,7 +226,7 @@ function AdminHeader({ onMenuClick }) {
     }
 
     // Mark a result notification as read.
-    // The submitted result itself is NOT changed or deleted.
+    // The submitted result itself is not changed or deleted.
     function markResultAsRead(result) {
         const notificationId =
             getResultNotificationId(result);
@@ -232,10 +236,7 @@ function AdminHeader({ onMenuClick }) {
         }
 
         const updatedReadIds = [
-            ...new Set([
-                ...readResultIds,
-                notificationId,
-            ]),
+            ...new Set([...readResultIds, notificationId]),
         ];
 
         try {
@@ -255,9 +256,7 @@ function AdminHeader({ onMenuClick }) {
 
     // Clicking a notification marks it as read before navigating.
     function handleNotificationClick(notification) {
-        if (
-            notification.notificationType === "result"
-        ) {
+        if (notification.notificationType === "result") {
             markResultAsRead(notification);
             openResultsPage();
             return;
@@ -269,6 +268,7 @@ function AdminHeader({ onMenuClick }) {
 
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm md:px-8">
+
             {/* Left side */}
             <div className="flex items-center gap-3">
                 <button
@@ -303,9 +303,7 @@ function AdminHeader({ onMenuClick }) {
                 <div className="relative">
                     <button
                         type="button"
-                        onClick={() =>
-                            setIsOpen((open) => !open)
-                        }
+                        onClick={() => setIsOpen((open) => !open)}
                         className="relative rounded-lg p-2 text-gray-600 transition hover:bg-gray-100"
                         aria-label={`Notifications, ${notificationCount} unread`}
                         aria-expanded={isOpen}
@@ -333,6 +331,7 @@ function AdminHeader({ onMenuClick }) {
                             />
 
                             <div className="absolute right-0 z-50 mt-3 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+
                                 {/* Notification header */}
                                 <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
                                     <div>
@@ -341,11 +340,18 @@ function AdminHeader({ onMenuClick }) {
                                         </h3>
 
                                         <p className="mt-1 text-xs text-gray-500">
-                                            {unreadMessages.length} unread message
-                                            {unreadMessages.length === 1
-                                                ? ""
-                                                : "s"}{" "}
-                                            · {submittedResults.length} result
+                                            {isSuperAdmin && (
+                                                <>
+                                                    {unreadMessages.length} unread
+                                                    message
+                                                    {unreadMessages.length === 1
+                                                        ? ""
+                                                        : "s"}{" "}
+                                                    ·{" "}
+                                                </>
+                                            )}
+
+                                            {submittedResults.length} result
                                             {submittedResults.length === 1
                                                 ? ""
                                                 : "s"}{" "}
@@ -373,8 +379,9 @@ function AdminHeader({ onMenuClick }) {
                                             </p>
 
                                             <p className="mt-1 text-xs text-gray-500">
-                                                New messages and submitted
-                                                results will appear here.
+                                                {isSuperAdmin
+                                                    ? "New messages and submitted results will appear here."
+                                                    : "New submitted results will appear here."}
                                             </p>
                                         </div>
                                     ) : (
@@ -406,13 +413,9 @@ function AdminHeader({ onMenuClick }) {
                                                             <div className="flex items-start gap-3">
                                                                 <span className="rounded-lg bg-green-100 p-2 text-green-800">
                                                                     {isResult ? (
-                                                                        <FileCheck
-                                                                            size={19}
-                                                                        />
+                                                                        <FileCheck size={19} />
                                                                     ) : (
-                                                                        <Mail
-                                                                            size={19}
-                                                                        />
+                                                                        <Mail size={19} />
                                                                     )}
                                                                 </span>
 
@@ -477,14 +480,22 @@ function AdminHeader({ onMenuClick }) {
                                 </div>
 
                                 {/* Footer actions */}
-                                <div className="grid grid-cols-2 gap-2 border-t border-gray-100 p-3">
-                                    <button
-                                        type="button"
-                                        onClick={openMessagesPage}
-                                        className="rounded-lg border border-green-800 px-3 py-2.5 text-sm font-semibold text-green-900 transition hover:bg-green-50"
-                                    >
-                                        View messages
-                                    </button>
+                                <div
+                                    className={`grid ${
+                                        isSuperAdmin
+                                            ? "grid-cols-2"
+                                            : "grid-cols-1"
+                                    } gap-2 border-t border-gray-100 p-3`}
+                                >
+                                    {isSuperAdmin && (
+                                        <button
+                                            type="button"
+                                            onClick={openMessagesPage}
+                                            className="rounded-lg border border-green-800 px-3 py-2.5 text-sm font-semibold text-green-900 transition hover:bg-green-50"
+                                        >
+                                            View messages
+                                        </button>
+                                    )}
 
                                     <button
                                         type="button"

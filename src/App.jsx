@@ -1,5 +1,7 @@
-
 import { Routes, Route } from "react-router-dom";
+
+import NotFound from "./pages/Notfound";
+// import ServerError from "./pages/ServerError";
 
 import PublicLayout from "./components/layout/PublicLayout";
 import AdminLayout from "./components/layout/AdminLayout";
@@ -25,12 +27,19 @@ import Results from "./pages/admin/Results";
 import Messages from "./pages/admin/Messages";
 import Settings from "./pages/admin/Settings";
 
+
+function TestError() {
+  throw new Error("Greenfield test error");
+}
+
+
 export default function App() {
   return (
     <>
       <ScrollToTop />
 
       <Routes>
+
         {/* Public Website */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
@@ -57,6 +66,11 @@ export default function App() {
           <Route path="/admin/messages" element={<Messages />} />
           <Route path="/admin/settings" element={<Settings />} />
         </Route>
+
+        {/* 404 - Page Not Found */}
+        <Route path="*" element={<NotFound />} />
+
+        <Route path="/" element={<TestError />} />
       </Routes>
     </>
   );
