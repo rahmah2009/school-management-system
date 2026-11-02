@@ -5,10 +5,12 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import AccessDenied from "../../pages/AccessDenied";
+import useSessionTimeout from "../../hooks/useSessionTimeout";
 
 function AdminLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
+    useSessionTimeout();
 
     const token = sessionStorage.getItem("greenfield_admin_token");
 
