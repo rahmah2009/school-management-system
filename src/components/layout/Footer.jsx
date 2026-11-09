@@ -17,6 +17,7 @@ const quickLinks = [
   { label: "Academics", to: "/academics" },
   { label: "Teachers", to: "/teachers" },
   { label: "Contact", to: "/contact" },
+  { label: "Login", to: "/login" },
 ];
 
 const academicLinks = [
@@ -24,7 +25,7 @@ const academicLinks = [
   { label: "Senior Secondary School", to: "/academics" },
 ];
 
-// Example URLs — replace with Greenfield's actual profiles when available.
+// Example URLs — replace with Greenfield's actual profiles later.
 const socialLinks = [
   {
     label: "Facebook",
@@ -74,6 +75,7 @@ function Footer() {
             need for a brighter future.
           </p>
 
+          {/* Social Media */}
           <div className="mt-6 flex gap-3">
             {socialLinks.map(({ label, icon: Icon, href }) => (
               <a
@@ -152,10 +154,10 @@ function Footer() {
                 className="shrink-0 text-amber-400"
               />
               <a
-                href="tel:+23441797484"
+                href="tel:+2347041797484"
                 className="transition hover:text-white"
               >
-                +23441797484
+                +2347041797484
               </a>
             </li>
 
@@ -164,7 +166,12 @@ function Footer() {
                 size={16}
                 className="shrink-0 text-amber-400"
               />
-              <span>Email address to be updated</span>
+              <a
+                href="mailto:info@greenfieldschool.com"
+                className="transition hover:text-white"
+              >
+                info@greenfieldschool.com
+              </a>
             </li>
           </ul>
         </div>
