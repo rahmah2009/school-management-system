@@ -30,7 +30,7 @@ const socialLinks = [
   {
     label: "Facebook",
     icon: Facebook,
-    href: "https://www.facebook.com/greenfieldschoolf",
+    href: "https://www.facebook.com/Greenfieldschool",
   },
   {
     label: "Instagram",
